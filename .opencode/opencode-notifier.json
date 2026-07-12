@@ -1,0 +1,44 @@
+
+{
+  "sound": true,
+  "notification": true,
+  "suppressWhenFocused": false,
+  "events": {
+    "complete": {
+      "sound": true,
+      "notification": true,
+      "command": true,
+      "bell": false
+    },
+    "permission": {
+      "sound": true,
+      "notification": true,
+      "command": true,
+      "bell": false
+    },
+    "question": {
+      "sound": true,
+      "notification": true,
+      "command": true,
+      "bell": false
+    },
+    "error": {
+      "sound": true,
+      "notification": true,
+      "command": true,
+      "bell": false
+    },
+    "subagent_complete": {
+      "sound": false,
+      "notification": false,
+      "command": true,
+      "bell": false
+    }
+  },
+  "messages": {
+    "complete": "OpenCode a terminé",
+    "permission": "OpenCode attend une permission",
+    "question": "OpenCode a une question",
+    "error": "OpenCode a rencontré une erreur"
+  }
+}

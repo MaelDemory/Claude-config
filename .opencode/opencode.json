@@ -1,0 +1,131 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "openai/gpt-5.5",
+  "small_model": "openai/gpt-5.4-mini",
+  "default_agent": "cto",
+  "agent": {
+    "general": {
+      "disable": true
+    },
+    "explore": {
+      "disable": true
+    }
+  },
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved": 8000
+  },
+  "mcp": {
+  },
+  "provider": {
+    "openai": {
+      "models": {
+        "gpt-5.3-codex": {
+          "options": {
+            "reasoningEffort": "high",
+            "reasoningSummary": "auto",
+            "textVerbosity": "low"
+          }
+        },
+        "gpt-5.4-mini": {
+          "options": {
+            "reasoningEffort": "medium",
+            "reasoningSummary": "auto",
+            "textVerbosity": "low"
+          }
+        },
+        "gpt-5.4": {
+          "options": {
+            "reasoningEffort": "high",
+            "reasoningSummary": "auto",
+            "textVerbosity": "low"
+          }
+        },
+        "gpt-5.5": {
+          "options": {
+            "reasoningEffort": "low",
+            "reasoningSummary": "auto",
+            "textVerbosity": "low"
+          }
+        }
+      },
+      "options": {
+        "setCacheKey": true,
+        "headerTimeout": 60000,
+        "timeout": 600000,
+        "chunkTimeout": 60000
+      }
+    },
+    "opencode": {
+      "name": "OpenCode Go",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "https://api.opencode.ai/v1"
+      },
+      "models": {
+        "minimax-m2.7": {
+          "name": "minimax-m2.7"
+        }
+      }
+    },
+    "llama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Local llama.cpp",
+      "options": {
+        "baseURL": "http://127.0.0.1:8081/v1"
+      },
+      "models": {
+        "local": {
+          "name": "Qwen3.6"
+        }
+      }
+    }
+  },
+  "skills": {
+    "paths": [
+      "~/.opencode/skills"
+    ]
+  },
+  "references": {
+    "vault-super": {
+      "path": "/Users/hugo/Documents/ObsidianMemory",
+      "description": "Root ObsidianMemory supervault for routing, indexes, and cross-vault memory discovery."
+    },
+    "vault-dev": {
+      "path": "/Users/hugo/Documents/ObsidianMemory/Dev Vault",
+      "description": "Dev vault for coding projects, kanban, ADRs, changelogs, technical decisions, and reusable implementation learnings."
+    },
+    "vault-research": {
+      "path": "/Users/hugo/Documents/ObsidianMemory/Research Vault",
+      "description": "Research vault for source logs, exploratory briefs, topic maps, and reusable non-investment research."
+    },
+    "vault-content": {
+      "path": "/Users/hugo/Documents/ObsidianMemory/Content Vault",
+      "description": "Content vault for LinkedIn, Medium, scripts, positioning, publishing pipelines, and creative/content memory."
+    },
+    "vault-investment": {
+      "path": "/Users/hugo/Documents/ObsidianMemory/Investment Vault",
+      "description": "Investment vault for asset research, sector research, source logs, investment memos, theses, and watchlists."
+    },
+    "vault-life-legacy": {
+      "path": "/Users/hugo/Documents/ObsidianHugo",
+      "description": "Existing personal/business second-brain vault used as legacy context and migration source."
+    },
+    "design-references": {
+      "path": "/Users/hugo/.config/opencode/design-references",
+      "description": "Global frontend visual inspiration images. Use for UI direction when a task asks for example screenshots, PNG references, or a house visual style."
+    }
+  },
+  "watcher": {
+    "ignore": [
+      "node_modules/**",
+      "dist/**",
+      "build/**",
+      ".git/**"
+    ]
+  },
+  "plugin": [
+    "@mohak34/opencode-notifier@latest"
+  ]
+}

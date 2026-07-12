@@ -1,0 +1,201 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.17",
+    "lastTouchedAt": "2026-02-19T17:28:31.116Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-02-19T17:28:31.101Z",
+    "lastRunVersion": "2026.2.17",
+    "lastRunCommand": "doctor",
+    "lastRunMode": "local"
+  },
+  "auth": {
+    "profiles": {
+      "anthropic:default": {
+        "provider": "anthropic",
+        "mode": "token"
+      }
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "nvidia-nim": {
+        "baseUrl": "https://integrate.api.nvidia.com/v1",
+        "apiKey": "TOKEN",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "moonshotai/kimi-k2.5",
+            "name": "Kimi K2.5 (NVIDIA NIM)",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "openrouter/minimax/minimax-m2.5",
+        "fallbacks": [
+          "openrouter/minimax/minimax-m2.5",
+          "openrouter/moonshotai/kimi-k2.5"
+        ]
+      },
+      "models": {
+        "nvidia-nim/moonshotai/kimi-k2.5": {
+          "alias": "kimi"
+        }
+      },
+      "workspace": "/home/openclaw/.openclaw/workspace",
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "default": true,
+        "name": "Main",
+        "workspace": "/home/openclaw/.openclaw/workspace"
+      },
+      {
+        "id": "pm",
+        "name": "Product Manager",
+        "workspace": "/home/openclaw/.openclaw/workspace-pm",
+        "agentDir": "/home/openclaw/.openclaw/agents/pm/agent",
+        "model": {
+          "primary": "openrouter/moonshotai/kimi-k2.5"
+        }
+      },
+      {
+        "id": "dev-front",
+        "name": "Dev Frontend",
+        "workspace": "/home/openclaw/.openclaw/workspace-dev-front",
+        "agentDir": "/home/openclaw/.openclaw/agents/dev-front/agent"
+      },
+      {
+        "id": "dev-back",
+        "name": "Dev Backend",
+        "workspace": "/home/openclaw/.openclaw/workspace-dev-back",
+        "agentDir": "/home/openclaw/.openclaw/agents/dev-back/agent"
+      },
+      {
+        "id": "qa",
+        "name": "QA Engineer",
+        "workspace": "/home/openclaw/.openclaw/workspace-qa",
+        "agentDir": "/home/openclaw/.openclaw/agents/qa/agent"
+      },
+      {
+        "id": "content",
+        "name": "Content & Marketing",
+        "workspace": "/home/openclaw/.openclaw/workspace-content",
+        "agentDir": "/home/openclaw/.openclaw/agents/content/agent"
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "telegram",
+        "accountId": "default"
+      }
+    },
+    {
+      "agentId": "pm",
+      "match": {
+        "channel": "telegram",
+        "accountId": "pm"
+      }
+    }
+  ],
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto"
+  },
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "session-memory": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "TOKEN"
+      ],
+      "groupPolicy": "allowlist",
+      "streamMode": "partial",
+      "accounts": {
+        "default": {
+          "dmPolicy": "pairing",
+          "botToken": "TOKEN",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "pm": {
+          "dmPolicy": "pairing",
+          "botToken": "TOKEN",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        }
+      }
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "TOKEN"
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    },
+    "nodes": {
+      "denyCommands": [
+        "camera.snap",
+        "camera.clip",
+        "screen.record",
+        "calendar.add",
+        "contacts.add",
+        "reminders.add"
+      ]
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true
+      }
+    }
+  }
+}
