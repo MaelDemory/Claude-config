@@ -7,3 +7,4 @@ Ce repo est une config starter Claude Code installable via `./install.sh` (voir 
 - `.opencode/` et `.openclaw/` sont les configs d'origine, en lecture seule pour référence — ne pas les modifier ni les « nettoyer ».
 - Quand un agent ou une skill est modifié, garder la parité : frontmatter valide (name + description), chemins portables (`~/…`, jamais de `/Users/<user>` en dur), templates de sortie inchangés sauf demande explicite.
 - Tester `install.sh` après modification : `CLAUDE_CONFIG_DIR=$(mktemp -d) ./install.sh` doit passer sans erreur, deux fois de suite (idempotence).
+- `install.ps1` est l'équivalent Windows d'`install.sh` (copie par défaut, pas de hooks) : toute évolution de l'un doit être répercutée sur l'autre. Non testable sur macOS — le signaler dans le commit si modifié sans test.

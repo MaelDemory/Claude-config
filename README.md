@@ -4,6 +4,8 @@ Config starter pour [Claude Code](https://code.claude.com) : 13 subagents spéci
 
 ## Installation sur un nouveau poste
 
+### macOS / Linux
+
 ```bash
 git clone <url-du-repo> workflow-ia
 cd workflow-ia
@@ -19,6 +21,20 @@ Par défaut l'installation **symlinke** vers le clone : un `git pull` dans le re
 ```
 
 L'installeur est idempotent (relançable sans risque) et sauvegarde tout fichier existant qu'il remplace dans `~/.claude/backups/`.
+
+### Windows
+
+```powershell
+git clone <url-du-repo> workflow-ia
+cd workflow-ia
+powershell -ExecutionPolicy Bypass -File install.ps1
+```
+
+Différences avec macOS/Linux :
+
+- Mode **copie** par défaut (les symlinks Windows exigent le mode développeur ou une console admin) : après un `git pull`, relance `install.ps1` pour propager. Pour des symlinks quand même : `install.ps1 -Mode link`.
+- Les **hooks du template ne sont pas installés** (rtk-rewrite est un script bash, les notifications utilisent `osascript`/`afplay` — macOS uniquement). Seules les permissions sont créées/fusionnées dans `settings.json`.
+- Sous **Git Bash/WSL**, `./install.sh copy` fonctionne aussi.
 
 ## Ce qui est installé
 
@@ -44,6 +60,35 @@ Détails dans [`dev-harness.md`](dev-harness.md).
 - `cmux` — vérification visuelle navigateur pour le travail frontend ; les skills dégradent proprement s'il est absent.
 - **Vault Obsidian** : les agents `vault`/`kanban` et les skills mémoire attendent un vault dans `~/Documents/ObsidianMemory` (structure : `Dev Vault/`, `PM/Projects/`, `PM/Tasks/`, …). Crée-le ou adapte les chemins dans les skills concernées.
 - Les notifications du template utilisent `osascript`/`afplay` (macOS uniquement).
+
+## Ajouter la config à un projet existant
+
+Si tu as installé la config globalement (`./install.sh`), **il n'y a rien à faire** : agents, skills et harnais s'appliquent déjà à tous tes projets.
+
+Embarquer la config *dans* un repo n'est utile que pour la **versionner avec le projet** (la partager avec une équipe, ou figer une variante par projet) :
+
+```bash
+cd /chemin/vers/mon-projet
+
+# agents + skills + hooks versionnés dans le projet
+mkdir -p .claude
+cp -R /chemin/vers/workflow-ia/.claude/agents .claude/agents
+cp -R /chemin/vers/workflow-ia/.claude/skills .claude/skills
+cp -R /chemin/vers/workflow-ia/.claude/hooks  .claude/hooks
+
+# harnais importé depuis le CLAUDE.md du projet
+cp /chemin/vers/workflow-ia/dev-harness.md .
+printf '# CLAUDE.md\n\n@dev-harness.md\n' > CLAUDE.md   # ou ajoute juste la ligne @dev-harness.md à ton CLAUDE.md existant
+
+echo '.claude/settings.local.json' >> .gitignore
+```
+
+À savoir :
+
+- Si le projet a déjà un `.claude/` ou un `CLAUDE.md`, complète-les au lieu d'écraser (copie les sous-dossiers manquants, ajoute la ligne `@dev-harness.md`).
+- En cas de doublon de nom avec la config globale, la version **projet** a priorité — inutile de désinstaller le global.
+- Pour des settings partagés au niveau projet, pars de `settings.template.json` vers `.claude/settings.json` en remplaçant `${CLAUDE_CONFIG_DIR:-$HOME/.claude}` par `$CLAUDE_PROJECT_DIR/.claude` dans le chemin du hook.
+- Ne copie que ce qui sert au projet : pour un backend seul, par exemple, les skills `content-*` ou `asset-research-skill` peuvent être omises.
 
 ## Personnalisation
 
