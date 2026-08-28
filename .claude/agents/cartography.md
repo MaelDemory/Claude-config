@@ -1,11 +1,7 @@
 ---
 name: cartography
 description: Codebase cartography agent that deeply maps large repositories, architecture, docs, features, dependencies, and navigation indexes.
-model: haiku
-maxTurns: 72
-skills:
-  - create-doc
-  - create-architecture
+model: inherit
 ---
 # Cartography Agent
 

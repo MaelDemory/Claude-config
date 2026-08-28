@@ -1,7 +1,10 @@
 ---
 name: create-plan
-description: Create-plan, PLAN file, TASK_CONTEXT.md, implementation plan, or planning template. Use by the plan agent to write PLAN-*.md, maintain TASK_CONTEXT.md, and invoke plan-contest.
+description: Create-plan, PLAN file, TASK_CONTEXT.md, implementation plan, or planning template. Use by the planner subagent to write PLAN-*.md, maintain TASK_CONTEXT.md, and invoke plan-contest.
 ---
+
+Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the global dev harness (`## Vault configuration` in `dev-harness.md`); defaults `~/Documents/ObsidianMemory` and `~/Documents/ObsidianLegacy`. Always quote vault paths in shell commands (folder names contain spaces).
+
 # Create Plan
 
 ## Required `PLAN-*.md` template
@@ -22,7 +25,7 @@ description: Create-plan, PLAN file, TASK_CONTEXT.md, implementation plan, or pl
 - Progress: `PROGRESS.md` — <active state or missing>
 - Decisions: `DECISIONS.md` — <constraints affecting this plan or missing>
 - Feature list: `feature_list.json` — <feature id/status or missing>
-- Kanban: `~/Documents/ObsidianMemory/PM/Tasks/<task>.md` or Dev Vault `projects/<project>/kanban.md` — <task/status or none>
+- Kanban: `<vault-root>/PM/Tasks/<task>.md` or Dev Vault `projects/<project>/kanban.md` — <task/status or none>
 
 ## Assumptions
 - <assumption and impact if wrong>
@@ -50,7 +53,7 @@ description: Create-plan, PLAN file, TASK_CONTEXT.md, implementation plan, or pl
 
 ## Required `TASK_CONTEXT.md` template
 
-Create or update `TASK_CONTEXT.md` next to the project's durable state files (`PROGRESS.md`, `DECISIONS.md`, `feature_list.json`) when the task is non-trivial or should be handed to `build`.
+Create or update `TASK_CONTEXT.md` next to the project's durable state files (`PROGRESS.md`, `DECISIONS.md`, `feature_list.json`) when the task is non-trivial or should be handed to the build phase (the main session executing the build chain).
 
 Use this exact section structure:
 
@@ -87,8 +90,8 @@ Use this exact section structure:
 - <blocking or non-blocking question, or `None`>
 ```
 
-Rules:
-- `TASK_CONTEXT.md` is the active handoff file for `build`; keep it compact but complete enough that `build` does not need to rediscover the full task.
+TASK_CONTEXT.md rules:
+- `TASK_CONTEXT.md` is the active handoff file for the build phase; keep it compact but complete enough that the implementer does not need to rediscover the full task.
 - Include every file already read that materially shaped the plan.
 - Preserve explicit user constraints exactly, especially “do not change” areas, formulas, schemas, compatibility requirements, and verification commands.
 - If there are multiple files to change, add one `### Update <path>` / `### Add <path>` / `### Remove <path>` subsection per file or area.

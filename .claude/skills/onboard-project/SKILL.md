@@ -2,15 +2,18 @@
 name: onboard-project
 description: Onboard-project, existing codebase onboarding, or create vault project from current repo. Use before cartography/indexing an existing repo into ObsidianMemory Dev Vault and PM.
 ---
+
+Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the global dev harness (`## Vault configuration` in `dev-harness.md`); defaults `~/Documents/ObsidianMemory` and `~/Documents/ObsidianLegacy`. Always quote vault paths in shell commands (folder names contain spaces).
+
 # Onboard Project
 
 ## Configured vault paths
 
-- Supervault root: `~/Documents/ObsidianMemory`
-- Dev/code project memory: `~/Documents/ObsidianMemory/Dev Vault/projects/<project-slug>/`
-- PM project record: `~/Documents/ObsidianMemory/PM/Projects/<project-slug>.md`
-- PM task records: `~/Documents/ObsidianMemory/PM/Tasks/`
-- Legacy life/business vault: `~/Documents/ObsidianLegacy`
+- Supervault root: `<vault-root>`
+- Dev/code project memory: `<vault-root>/Dev Vault/projects/<project-slug>/`
+- PM project record: `<vault-root>/PM/Projects/<project-slug>.md`
+- PM task records: `<vault-root>/PM/Tasks/`
+- Legacy life/business vault: `<legacy-vault-root>`
 
 For existing codebases, default to Dev Vault project memory plus a PM project record. Ask for confirmation before creating a new vault project folder or making bulk vault writes, deletes, renames, or cross-vault migrations.
 
@@ -43,15 +46,15 @@ For existing codebases, default to Dev Vault project memory plus a PM project re
 - `<path>` — <created/updated doc>
 
 ## ObsidianMemory updates
-- Dev project: `~/Documents/ObsidianMemory/Dev Vault/projects/<project-slug>/_project.md` / none
-- PM project: `~/Documents/ObsidianMemory/PM/Projects/<project-slug>.md` / none
-- Kanban: `~/Documents/ObsidianMemory/Dev Vault/projects/<project-slug>/kanban.md` / none
+- Dev project: `<vault-root>/Dev Vault/projects/<project-slug>/_project.md` / none
+- PM project: `<vault-root>/PM/Projects/<project-slug>.md` / none
+- Kanban: `<vault-root>/Dev Vault/projects/<project-slug>/kanban.md` / none
 
 ## Repo/vault/kanban alignment
 - Repo progress: `PROGRESS.md` / none
 - Feature list: `feature_list.json` / none
 - Dev Vault project: `<path>` / none
-- Matching PM task: `~/Documents/ObsidianMemory/PM/Tasks/<task>.md` / none
+- Matching PM task: `<vault-root>/PM/Tasks/<task>.md` / none
 - Matching Dev kanban item: `<project>/kanban.md#<task>` / none
 - Alignment notes: <repo/vault/kanban state agreement or mismatch>
 
@@ -64,9 +67,9 @@ For existing codebases, default to Dev Vault project memory plus a PM project re
 1. Read repo `AGENTS.md` / `.claude/CLAUDE.md` if present.
 2. Identify stack, package manager, run/test/build commands, docs, and deployment hints from exact files.
 3. Search ObsidianMemory before creating a new project:
-   - `~/Documents/ObsidianMemory/Dev Vault/projects/`
-   - `~/Documents/ObsidianMemory/PM/Projects/`
-   - `~/Documents/ObsidianMemory/00-Routing/vault-registry.md`
+   - `<vault-root>/Dev Vault/projects/`
+   - `<vault-root>/PM/Projects/`
+   - `<vault-root>/00-Routing/vault-registry.md`
 4. If no matching project exists, ask confirmation to create a Dev Vault project using `create-project`.
 5. If a matching project exists, update only the relevant `_project.md`, `kanban.md`, or PM record with explicit confirmation when needed.
 6. Recommend `write-agents-md` if the repo lacks a durable agent harness or verification commands.

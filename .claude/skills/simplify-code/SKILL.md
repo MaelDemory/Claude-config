@@ -1,6 +1,6 @@
 ---
-name: simplify
-description: Simplify recently modified code, preserve behavior, reduce nesting/duplication, improve naming, or refine React/server code. Use after review and before final verification.
+name: simplify-code
+description: Simplify-code, simplify recently modified code, preserve behavior, reduce nesting/duplication, improve naming, or refine React/server code. Use after review and before final verification.
 ---
 # Simplify
 

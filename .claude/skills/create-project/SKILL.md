@@ -2,17 +2,20 @@
 name: create-project
 description: Create-project, new project vault setup, or project folder template. Use by the vault agent to create a project inside ObsidianMemory using Dev Vault, PM, and domain vault routing.
 ---
+
+Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the global dev harness (`## Vault configuration` in `dev-harness.md`); defaults `~/Documents/ObsidianMemory` and `~/Documents/ObsidianLegacy`. Always quote vault paths in shell commands (folder names contain spaces).
+
 # Create Project
 
 ## Configured vault paths
 
-- Supervault root: `~/Documents/ObsidianMemory`
-- Dev/code project memory: `~/Documents/ObsidianMemory/Dev Vault/projects/<project-slug>/`
-- Project Manager records: `~/Documents/ObsidianMemory/PM/Projects/<project-slug>.md`
-- Project Manager tasks: `~/Documents/ObsidianMemory/PM/Tasks/`
-- Research projects: `~/Documents/ObsidianMemory/Research Vault/projects/<project-slug>/`
-- Content projects: `~/Documents/ObsidianMemory/Content Vault/projects/<project-slug>/`
-- Investment projects: `~/Documents/ObsidianMemory/Investment Vault/projects/<project-slug>/`
+- Supervault root: `<vault-root>`
+- Dev/code project memory: `<vault-root>/Dev Vault/projects/<project-slug>/`
+- Project Manager records: `<vault-root>/PM/Projects/<project-slug>.md`
+- Project Manager tasks: `<vault-root>/PM/Tasks/`
+- Research projects: `<vault-root>/Research Vault/projects/<project-slug>/`
+- Content projects: `<vault-root>/Content Vault/projects/<project-slug>/`
+- Investment projects: `<vault-root>/Investment Vault/projects/<project-slug>/`
 
 Ask for confirmation before creating a new project folder, and before any bulk vault writes, deletes, renames, moves, or cross-vault migrations.
 
@@ -29,7 +32,7 @@ Ask for confirmation before creating a new project folder, and before any bulk v
 For code/repo/software projects, create:
 
 ```text
-~/Documents/ObsidianMemory/Dev Vault/projects/<project-slug>/
+<vault-root>/Dev Vault/projects/<project-slug>/
 ├── _project.md
 ├── kanban.md
 ├── versions.md
@@ -43,7 +46,7 @@ For code/repo/software projects, create:
 Also create/update:
 
 ```text
-~/Documents/ObsidianMemory/PM/Projects/<project-slug>.md
+<vault-root>/PM/Projects/<project-slug>.md
 ```
 
 ## Required `_project.md` template
@@ -77,7 +80,7 @@ tags: [project]
 
 ## Key links
 - Repo: `<path or URL>`
-- PM record: `~/Documents/ObsidianMemory/PM/Projects/<project-slug>.md`
+- PM record: `<vault-root>/PM/Projects/<project-slug>.md`
 - Kanban: `kanban.md`
 - Versions: `versions.md`
 
@@ -129,7 +132,7 @@ tags: [versions]
 
 ## Required PM project record
 
-Use `~/Documents/ObsidianMemory/templates/pm-project.md` where possible, or this minimum:
+Use `<vault-root>/templates/pm-project.md` if it exists; otherwise use this minimum:
 
 ```markdown
 ---
@@ -141,7 +144,7 @@ created: <YYYY-MM-DD>
 updated: <YYYY-MM-DD>
 start: <YYYY-MM-DD>
 due:
-owner: Hugo
+owner: <owner>
 tags: [pm, project]
 ---
 

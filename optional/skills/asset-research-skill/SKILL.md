@@ -3,7 +3,7 @@ name: asset-research-skill
 description: Use this skill when the user asks to analyze, create, or update an investment asset/company in Notion Assets / Investments. Produces professional-grade, evidence-backed asset research and then creates or updates the matching Notion asset page after confirmation.
 ---
 
-# Asset Research: $ARGUMENTS
+# Asset Research
 
 ## Arguments
 
@@ -35,7 +35,7 @@ If `$ARGUMENTS` includes a company name, ticker, exchange, country, or intent, c
 
 ## Notion Assets Schema
 
-Use `notion-os-schema.md` and `config/notion-os.schema.json`.
+Discover the Assets database schema via the Notion MCP before writing (query the database properties). The property values below are an example configuration — adapt them to the actual database.
 
 Assets / Investments properties:
 - `Name` — title

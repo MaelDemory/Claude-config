@@ -2,10 +2,6 @@
 name: backend
 description: Backend specialist for APIs, data flow, persistence, modular services, and production-quality server code.
 model: inherit
-maxTurns: 24
-skills:
-  - comment
-  - create-architecture
 ---
 # Backend Agent
 

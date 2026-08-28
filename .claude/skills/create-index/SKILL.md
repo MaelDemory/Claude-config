@@ -2,6 +2,9 @@
 name: create-index
 description: Create index, routing index, repo index, or vault index. Use to make compact navigation maps from documentation and cartography.
 ---
+
+Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the global dev harness (`## Vault configuration` in `dev-harness.md`); defaults `~/Documents/ObsidianMemory` and `~/Documents/ObsidianLegacy`. Always quote vault paths in shell commands (folder names contain spaces).
+
 # Create Index
 
 ## Required index template
@@ -24,7 +27,7 @@ description: Create index, routing index, repo index, or vault index. Use to mak
 - `<path>` — <responsibility>
 
 ## Vault links
-- `~/Documents/ObsidianMemory/...` — <topic>
+- `<vault-root>/...` — <topic>
 
 ## Maintenance
 - Last updated: <date>

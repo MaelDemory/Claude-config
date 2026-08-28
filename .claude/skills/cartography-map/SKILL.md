@@ -1,7 +1,10 @@
 ---
-name: cartography
-description: Cartography, deep codebase map, repo map, onboarding map, or navigation index. Use for explicit codebase mapping/onboarding requests that need multiple cartography subagents and docs/indexes.
+name: cartography-map
+description: Cartography-map, cartography, deep codebase map, repo map, onboarding map, or navigation index. Use for explicit codebase mapping/onboarding requests that need multiple cartography subagents and docs/indexes.
 ---
+
+Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the global dev harness (`## Vault configuration` in `dev-harness.md`); defaults `~/Documents/ObsidianMemory` and `~/Documents/ObsidianLegacy`. Always quote vault paths in shell commands (folder names contain spaces).
+
 # Cartography
 
 Use this skill when the user explicitly asks to map, onboard, document, index, or navigate a full codebase, especially when a single cartography pass would be too shallow.
@@ -26,7 +29,7 @@ Produce durable navigation knowledge:
    - Use this only to decide how to split the work; do not attempt a full map in the coordinator context.
 
 3. Split the repo into slices.
-   - Small repo: one `cartography` subagent may be enough, plus `indexor`.
+   - Small repo: one `cartography` subagent may be enough, plus `indexer`.
    - Medium/large repo: launch multiple `cartography` subagents concurrently.
    - Prefer slices such as:
      - Docs/product/setup/deployment.
@@ -56,13 +59,13 @@ Produce durable navigation knowledge:
    - Keep docs concise and route-oriented.
 
 6. Build navigation indexes.
-   - Delegate to `indexor` after cartography docs exist.
+   - Delegate to `indexer` after cartography docs exist.
    - Require `create-index` and exact route tables.
    - Expected indexes include `.claude/docs/_index.md` and architecture/project indexes where useful.
 
 7. Persist durable knowledge only when appropriate.
    - Use `memory-write` for reusable project facts with evidence.
-   - Use `~/Documents/ObsidianMemory` as the configured vault root.
+   - Use `<vault-root>` as the configured vault root.
    - Ask before broad vault writes.
 
 8. Final handoff.
@@ -71,7 +74,7 @@ Produce durable navigation knowledge:
 
 ## Sizing guide
 
-- Small repo: one app/package, fewer than ~10 top-level source folders, clear README/scripts. Use one cartography subagent and one indexor pass.
+- Small repo: one app/package, fewer than ~10 top-level source folders, clear README/scripts. Use one cartography subagent and one indexer pass.
 - Medium repo: multiple apps/packages, mixed frontend/backend/data/test areas, or sparse docs. Use 3–5 cartography subagents by slice.
 - Large repo/monorepo: many services/packages, multiple runtimes, generated clients, or unclear ownership. Use bounded waves of cartography subagents; synthesize after each wave before launching more.
 

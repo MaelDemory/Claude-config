@@ -2,9 +2,6 @@
 name: architecture
 description: Software architecture expert for module boundaries, diagrams, dependency flow, and maintainable structure.
 model: inherit
-maxTurns: 18
-skills:
-  - create-architecture
 ---
 # Architecture Agent
 

@@ -2,12 +2,7 @@
 name: plan-contest
 description: Neutral plan challenger that contests assumptions, fragility, scope, and sequencing before build.
 model: inherit
-maxTurns: 12
-disallowedTools:
-  - Write
-  - Edit
-  - NotebookEdit
-  - Bash
+tools: Read, Grep, Glob
 ---
 # Plan Contest Agent
 

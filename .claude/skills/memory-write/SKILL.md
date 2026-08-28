@@ -2,17 +2,20 @@
 name: memory-write
 description: Memory-write, save learning, coding advice, decision, or reusable project knowledge. Use to write durable notes into the configured ObsidianMemory vaults.
 ---
+
+Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the global dev harness (`## Vault configuration` in `dev-harness.md`); defaults `~/Documents/ObsidianMemory` and `~/Documents/ObsidianLegacy`. Always quote vault paths in shell commands (folder names contain spaces).
+
 # Memory Write
 
 ## Configured vault paths
 
-- Supervault root: `~/Documents/ObsidianMemory`
-- Dev global memory: `~/Documents/ObsidianMemory/Dev Vault/global/`
-- Dev project memory: `~/Documents/ObsidianMemory/Dev Vault/projects/<project-slug>/`
-- Research memory: `~/Documents/ObsidianMemory/Research Vault/`
-- Content memory: `~/Documents/ObsidianMemory/Content Vault/`
-- Investment memory: `~/Documents/ObsidianMemory/Investment Vault/`
-- PM/task memory: `~/Documents/ObsidianMemory/PM/`
+- Supervault root: `<vault-root>`
+- Dev global memory: `<vault-root>/Dev Vault/global/`
+- Dev project memory: `<vault-root>/Dev Vault/projects/<project-slug>/`
+- Research memory: `<vault-root>/Research Vault/`
+- Content memory: `<vault-root>/Content Vault/`
+- Investment memory: `<vault-root>/Investment Vault/`
+- PM/task memory: `<vault-root>/PM/`
 
 ## Routing rules
 

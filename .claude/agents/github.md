@@ -2,10 +2,6 @@
 name: github
 description: GitHub workflow agent for commits, PRs, and release notes when explicitly requested.
 model: inherit
-maxTurns: 18
-skills:
-  - commit
-  - create-pr
 ---
 # GitHub Agent
 

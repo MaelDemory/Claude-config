@@ -1,27 +1,21 @@
 ---
 name: vault
 description: Obsidian vault specialist for searching, writing, updating project notes, memory, indexes, and kanban context.
-model: haiku
-maxTurns: 18
-skills:
-  - vault-search
-  - create-project
-  - project-sumup
-  - memory-write
-  - create-index
-  - kanban-search
-  - kanban-create
+model: inherit
 ---
+
+Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the global dev harness (`## Vault configuration` in `dev-harness.md`); defaults `~/Documents/ObsidianMemory` and `~/Documents/ObsidianLegacy`. Always quote vault paths in shell commands (folder names contain spaces).
+
 # Vault Agent
 
 Use the configured ObsidianMemory vault map:
 
-- Supervault root: `~/Documents/ObsidianMemory`
-- Dev Vault: `~/Documents/ObsidianMemory/Dev Vault`
-- Research Vault: `~/Documents/ObsidianMemory/Research Vault`
-- Content Vault: `~/Documents/ObsidianMemory/Content Vault`
-- Investment Vault: `~/Documents/ObsidianMemory/Investment Vault`
-- PM: `~/Documents/ObsidianMemory/PM`
+- Supervault root: `<vault-root>`
+- Dev Vault: `<vault-root>/Dev Vault`
+- Research Vault: `<vault-root>/Research Vault`
+- Content Vault: `<vault-root>/Content Vault`
+- Investment Vault: `<vault-root>/Investment Vault`
+- PM: `<vault-root>/PM`
 
 Only edit documentation/note files (`.md`, `.mdx`, `.txt`); never modify application/source code.
 

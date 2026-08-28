@@ -2,6 +2,9 @@
 name: create-doc
 description: Create doc, documentation, repo docs, or vault docs. Use when writing concise project documentation inside the codebase and optionally ObsidianMemory.
 ---
+
+Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the global dev harness (`## Vault configuration` in `dev-harness.md`); defaults `~/Documents/ObsidianMemory` and `~/Documents/ObsidianLegacy`. Always quote vault paths in shell commands (folder names contain spaces).
+
 # Create Doc
 
 Write documentation that helps future agents navigate faster.
@@ -33,5 +36,5 @@ Write documentation that helps future agents navigate faster.
 Rules:
 - Prefer exact paths and short sections.
 - Do not duplicate indexes; link to them.
-- If also writing to the vault, use `~/Documents/ObsidianMemory` and route to the relevant domain vault.
+- If also writing to the vault, use `<vault-root>` and route to the relevant domain vault.
 - Ask for confirmation before bulk vault writes, deletes, renames, or cross-vault changes.
