@@ -21,13 +21,15 @@ Claude Code has no switchable primary agents; their roles are covered natively:
 - `review` — read-only implementation review against the plan and task.
 - `test` — independent test design/writing from the plan/spec, not the implementation.
 - `cartography` — codebase documentation and map generation.
-- `indexor` — repo/vault index creation from docs and cartography.
+- `indexer` — repo/vault index creation from docs and cartography.
 - `kanban` — vault kanban search/create/update using templates.
 - `file-system` — safe file/project/config navigation and search.
 - `github` — commit/PR workflow only when explicitly requested.
-- `vault` — ObsidianMemory search/write/update using `~/Documents/ObsidianMemory`.
+- `vault` — ObsidianMemory search/write/update using `<vault-root>` (see Vault configuration).
 
-Skills live in `.claude/skills/` and keep their OpenCode names (`create-plan`, `grill-me`, `wrap-up`, etc.).
+`plan-contest`, `review`, and `file-system` are enforced read-only via `tools: Read, Grep, Glob` in their frontmatter — not just by prose instructions.
+
+Skills live in `.claude/skills/` and keep their OpenCode names (`create-plan`, `grill-me`, `wrap-up`, etc.), with two renames to avoid collisions: `simplify-code` (a `simplify` built-in exists in Claude Code) and `cartography-map` (the `cartography` subagent keeps that name).
 
 ## Repo harness files
 
@@ -62,7 +64,7 @@ Skills live in `.claude/skills/` and keep their OpenCode names (`create-plan`, `
 2. `cartography` subagent
 3. `write-agents-md` if the repo lacks a short agent guide, state files, or verification commands.
 4. `create-doc`
-5. `indexor` subagent
+5. `indexer` subagent
 6. `create-index`
 7. `vault` subagent + `memory-write` when knowledge should be persisted.
 
@@ -81,7 +83,7 @@ For meaningful implementation work, proactively run this chain:
 3. For UI work, require `frontend-design`.
 4. Run `implementation-review` with the `review` subagent.
 5. Run `review-code`.
-6. Run `simplify` and apply clear simplifications.
+6. Run `simplify-code` and apply clear simplifications.
 7. Ask the `test` subagent to write/validate tests with `test-code`.
 8. Finish with `wrap-up`.
 
@@ -102,19 +104,32 @@ The user should not need to manually request review, simplify, test, or wrap-up 
 - Preserve user work. Do not revert, overwrite, delete, or clean up unrelated changes unless explicitly requested.
 - Do not commit, push, or create PRs unless explicitly requested.
 
+## Vault configuration
+
+Single source of truth for vault locations — agents and skills reference these placeholders instead of hard-coded paths:
+
+- `<vault-root>` = `~/Documents/ObsidianMemory` (edit here only to relocate the vault).
+- `<legacy-vault-root>` = `~/Documents/ObsidianLegacy` (historical notes; optional).
+- On Windows, resolve `~` explicitly to the user profile (`$env:USERPROFILE`); note that `Documents` may be redirected to OneDrive (`C:\Users\<user>\OneDrive - <org>\Documents`) — use the real resolved path.
+- Vault folder names contain spaces (`Dev Vault`, `Content Vault`): always quote vault paths in shell commands.
+- If `<vault-root>` does not exist, vault/kanban/memory skills must report "not configured" and continue; never fail the task over a missing vault.
+
 ## Vault rules
 
-- Configured supervault: `~/Documents/ObsidianMemory`.
-- Code project memory: `~/Documents/ObsidianMemory/Dev Vault/projects/<project>/`.
-- Cross-project records/tasks: `~/Documents/ObsidianMemory/PM/Projects/` and `~/Documents/ObsidianMemory/PM/Tasks/`.
+- Configured supervault: `<vault-root>` (see Vault configuration above).
+- Code project memory: `<vault-root>/Dev Vault/projects/<project>/`.
+- Cross-project records/tasks: `<vault-root>/PM/Projects/` and `<vault-root>/PM/Tasks/`.
 - Prefer `vault-search` and indexes before broad vault scans.
 - Ask before bulk vault writes, deletes, renames, or cross-vault changes.
 - Use `memory-write` only for durable, reusable knowledge with evidence.
 
-## Investment research
+## Optional skills (not installed by default)
 
-- Use `asset-research-skill` when the user asks to analyze, create, or update an investment asset/company.
-- Use `sector-research-skill` when the user asks to analyze an investment sector/theme, build a company universe, rank candidates, or create/update multiple asset pages.
+Personal content/investment skills live in `optional/skills/` in the starter repo and are only active if manually copied to `~/.claude/skills/`. When installed:
+
+- Use `asset-research-skill` when the user asks to analyze, create, or update an investment asset/company (requires the Notion MCP and a matching Assets database).
+- Use `sector-research-skill` for investment sector/theme analysis, company universes, and multi-asset pages.
+- `content-post` / `content-article` / `content-weekly` require the Content Vault guides under `<vault-root>/Content Vault/guides/`; if the guides are missing, say so and stop instead of improvising the voice rules.
 - Investment research must research first, prefer primary sources, search existing Assets before create/update, and ask confirmation before Notion writes.
 
 ## Verification

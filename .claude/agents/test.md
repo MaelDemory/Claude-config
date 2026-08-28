@@ -2,9 +2,6 @@
 name: test
 description: Independent test agent that writes tests from the plan/spec, not from the current implementation.
 model: inherit
-maxTurns: 20
-skills:
-  - test-code
 ---
 # Test Agent
 

@@ -2,6 +2,9 @@
 name: write-agents-md
 description: AGENTS.md, agent harness, PROGRESS.md, DECISIONS.md, feature_list.json, or repo state files. Use when creating or updating a repository's agent-readable harness and vault progress mirror.
 ---
+
+Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the global dev harness (`## Vault configuration` in `dev-harness.md`); defaults `~/Documents/ObsidianMemory` and `~/Documents/ObsidianLegacy`. Always quote vault paths in shell commands (folder names contain spaces).
+
 # Write AGENTS.md
 
 Use this skill to make a repository readable and governable by agents using plain files. The goal is the smallest durable harness that answers a fresh session's questions without turning `AGENTS.md` into an encyclopedia.
@@ -78,7 +81,7 @@ Use `.claude/CLAUDE.md` only for project-specific Claude Code instructions when 
 1. Run the relevant verification command and record the result.
 2. Update `PROGRESS.md` with done/in-progress/blocked/next steps.
 3. Update `feature_list.json` evidence/status if present.
-4. Mirror/link progress to `~/Documents/ObsidianMemory/Dev Vault/projects/<project>/` and `~/Documents/ObsidianMemory/PM/Projects/<project>.md` when configured.
+4. Mirror/link progress to `<vault-root>/Dev Vault/projects/<project>/` and `<vault-root>/PM/Projects/<project>.md` when configured.
 5. Update the matching kanban task status when one exists.
 
 ## Where to look
@@ -86,9 +89,9 @@ Use `.claude/CLAUDE.md` only for project-specific Claude Code instructions when 
 - API/domain rules: `<path>` — <what it answers>
 - UI/design: `<path>` — <what it answers>
 - Operations/deploy: `<path>` — <what it answers>
-- Vault project: `~/Documents/ObsidianMemory/Dev Vault/projects/<project>/_project.md` — <if configured>
-- Kanban: `~/Documents/ObsidianMemory/Dev Vault/projects/<project>/kanban.md` — <if configured>
-- PM project: `~/Documents/ObsidianMemory/PM/Projects/<project>.md` — <if configured>
+- Vault project: `<vault-root>/Dev Vault/projects/<project>/_project.md` — <if configured>
+- Kanban: `<vault-root>/Dev Vault/projects/<project>/kanban.md` — <if configured>
+- PM project: `<vault-root>/PM/Projects/<project>.md` — <if configured>
 ```
 
 ## Required `PROGRESS.md` template
@@ -101,7 +104,7 @@ Use `.claude/CLAUDE.md` only for project-specific Claude Code instructions when 
 - Latest commit: <hash and subject, or `not checked`>
 - Active task: <feature id/title or kanban task path>
 - Kanban match: <vault task path/status or `none`>
-- Vault mirror: `~/Documents/ObsidianMemory/Dev Vault/projects/<project>/_project.md` + PM project/task records / not configured
+- Vault mirror: `<vault-root>/Dev Vault/projects/<project>/_project.md` + PM project/task records / not configured
 
 ## Verification status
 - Full check: `<command>` — <pass/fail/not run> — <evidence/date>
@@ -145,7 +148,7 @@ Use `.claude/CLAUDE.md` only for project-specific Claude Code instructions when 
       "title": "<short title>",
       "user_visible_behavior": "<end-to-end behavior>",
       "status": "not_started",
-      "kanban_task": "~/Documents/ObsidianMemory/PM/Tasks/<task or none>.md",
+      "kanban_task": "<vault-root>/PM/Tasks/<task or none>.md",
       "verification": [
         "<exact command or manual check>",
         "<expected observable result>"
@@ -168,8 +171,8 @@ Rules:
 When the project has a vault folder, mirror repo progress to:
 
 ```text
-~/Documents/ObsidianMemory/Dev Vault/projects/<project>/_project.md
-~/Documents/ObsidianMemory/PM/Projects/<project>.md
+<vault-root>/Dev Vault/projects/<project>/_project.md
+<vault-root>/PM/Projects/<project>.md
 ```
 
 Use this template:
@@ -183,8 +186,8 @@ Use this template:
 - Latest verification: `<command>` — <pass/fail/not run> — <date>
 
 ## Kanban alignment
-- PM task: `~/Documents/ObsidianMemory/PM/Tasks/<task>.md` / none
-- Dev kanban: `~/Documents/ObsidianMemory/Dev Vault/projects/<project>/kanban.md#<task>` / none
+- PM task: `<vault-root>/PM/Tasks/<task>.md` / none
+- Dev kanban: `<vault-root>/Dev Vault/projects/<project>/kanban.md#<task>` / none
 - Status: <backlog|ready|in-progress|blocked|done>
 - Repo feature: `<feature_list.json:id>` / none
 

@@ -2,11 +2,6 @@
 name: planner
 description: Writable planning subagent that creates PLAN-*.md files, TASK_CONTEXT.md handoffs, uses plan-contest, and prepares build-ready task specs.
 model: inherit
-maxTurns: 25
-skills:
-  - create-plan
-  - grill-me
-  - create-architecture
 ---
 # Planner Agent
 

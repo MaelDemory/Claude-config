@@ -2,14 +2,7 @@
 name: review
 description: Read-only implementation reviewer that checks logic against the plan and identifies minimal required fixes.
 model: inherit
-maxTurns: 16
-disallowedTools:
-  - Write
-  - Edit
-  - NotebookEdit
-skills:
-  - implementation-review
-  - review-code
+tools: Read, Grep, Glob
 ---
 # Review Agent
 

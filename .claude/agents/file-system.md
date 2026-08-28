@@ -2,13 +2,7 @@
 name: file-system
 description: File-system navigator for reading/searching nearby projects, configs, and supporting files without unnecessary edits.
 model: haiku
-maxTurns: 16
-disallowedTools:
-  - Write
-  - Edit
-  - NotebookEdit
-skills:
-  - file-search
+tools: Read, Grep, Glob
 ---
 # File System Agent
 

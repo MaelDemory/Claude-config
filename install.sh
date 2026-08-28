@@ -8,8 +8,11 @@
 #   Symlinke/copie les agents, skills, hooks et le harnais dev-harness.md dans
 #   la config globale Claude Code, ajoute l'import @dev-harness.md au CLAUDE.md
 #   global, et installe/fusionne settings.json (permissions ; hooks uniquement
-#   à la création). Les fichiers existants non-symlinks sont sauvegardés dans
-#   ~/.claude/backups/. Idempotent : relançable sans effet de bord.
+#   à la création, et hooks de notification macOS exclus hors Darwin). Les
+#   skills optionnelles (optional/skills/) ne sont PAS installées. Requiert
+#   python3 (ou python) pour créer/fusionner settings.json hors macOS. Les
+#   fichiers existants non-symlinks sont sauvegardés dans ~/.claude/backups/.
+#   Idempotent : relançable sans effet de bord.
 # Output
 #   Journal des actions sur stdout ; code retour non nul en cas d'échec.
 
@@ -71,11 +74,41 @@ else
 fi
 
 echo "== Settings"
+# Détection robuste : le stub Microsoft Store de `python` sous Windows existe
+# dans le PATH mais échoue à l'exécution — on valide donc par un run réel.
+PYBIN=""
+for cand in python3 python; do
+  if command -v "$cand" >/dev/null 2>&1 && "$cand" -c 'pass' >/dev/null 2>&1; then
+    PYBIN="$cand"
+    break
+  fi
+done
 if [ ! -f "$DEST/settings.json" ]; then
-  cp "$REPO_DIR/settings.template.json" "$DEST/settings.json"
-  echo "  settings.json créé depuis settings.template.json (permissions + hooks)"
+  if [ "$(uname)" = "Darwin" ]; then
+    cp "$REPO_DIR/settings.template.json" "$DEST/settings.json"
+    echo "  settings.json créé depuis settings.template.json (permissions + hooks)"
+  elif [ -n "$PYBIN" ]; then
+    # Hors macOS : les hooks Notification/Stop (osascript/afplay) sont exclus ;
+    # le hook PreToolUse rtk (bash + jq) est conservé.
+    "$PYBIN" - "$REPO_DIR/settings.template.json" "$DEST/settings.json" <<'EOF'
+import json, sys
+tmpl = json.load(open(sys.argv[1]))
+hooks = tmpl.get("hooks", {})
+hooks.pop("Notification", None)
+hooks.pop("Stop", None)
+if not hooks:
+    tmpl.pop("hooks", None)
+json.dump(tmpl, open(sys.argv[2], "w"), indent=2, ensure_ascii=False)
+print("  settings.json créé (hooks de notification macOS exclus sur cet OS)")
+EOF
+  else
+    cp "$REPO_DIR/settings.template.json" "$DEST/settings.json"
+    echo "  ATTENTION: python3 absent — settings.json copié tel quel ; supprime"
+    echo "  manuellement les hooks Notification/Stop (osascript/afplay, macOS uniquement)."
+  fi
 else
-  python3 - "$DEST/settings.json" "$REPO_DIR/settings.template.json" <<'EOF'
+  if [ -n "$PYBIN" ]; then
+    "$PYBIN" - "$DEST/settings.json" "$REPO_DIR/settings.template.json" <<'EOF'
 import json, sys
 dest_path, tmpl_path = sys.argv[1], sys.argv[2]
 dest = json.load(open(dest_path))
@@ -87,6 +120,10 @@ json.dump(dest, open(dest_path, "w"), indent=2, ensure_ascii=False)
 print(f"  permissions fusionnées ({len(added)} règle(s) ajoutée(s))")
 print("  hooks NON modifiés (settings.json existant) — voir settings.template.json")
 EOF
+  else
+    echo "  ATTENTION: python3 absent — fusion des permissions ignorée ;"
+    echo "  ajoute manuellement les règles de settings.template.json à $DEST/settings.json."
+  fi
 fi
 
 echo

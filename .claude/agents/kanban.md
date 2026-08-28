@@ -2,19 +2,18 @@
 name: kanban
 description: Vault kanban specialist for searching, creating, and updating task cards using templates.
 model: haiku
-maxTurns: 14
-skills:
-  - kanban-search
-  - kanban-create
 ---
+
+Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the global dev harness (`## Vault configuration` in `dev-harness.md`); defaults `~/Documents/ObsidianMemory` and `~/Documents/ObsidianLegacy`. Always quote vault paths in shell commands (folder names contain spaces).
+
 # Kanban Agent
 
 Use the configured ObsidianMemory task system:
 
-- PM tasks: `~/Documents/ObsidianMemory/PM/Tasks/`
-- PM projects: `~/Documents/ObsidianMemory/PM/Projects/`
-- Dev project kanban: `~/Documents/ObsidianMemory/Dev Vault/projects/<project>/kanban.md`
-- Dashboards: `~/Documents/ObsidianMemory/PM/Dashboards/`
+- PM tasks: `<vault-root>/PM/Tasks/`
+- PM projects: `<vault-root>/PM/Projects/`
+- Dev project kanban: `<vault-root>/Dev Vault/projects/<project>/kanban.md`
+- Dashboards: `<vault-root>/PM/Dashboards/`
 
 Only edit documentation/note files (`.md`, `.mdx`, `.txt`); never modify application/source code.
 

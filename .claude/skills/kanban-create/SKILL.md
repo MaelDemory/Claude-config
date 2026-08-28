@@ -2,13 +2,16 @@
 name: kanban-create
 description: Kanban-create, create task, or write ticket. Use by kanban/vault workflows to create structured task records in ObsidianMemory PM and optionally link Dev Vault project kanban.
 ---
+
+Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the global dev harness (`## Vault configuration` in `dev-harness.md`); defaults `~/Documents/ObsidianMemory` and `~/Documents/ObsidianLegacy`. Always quote vault paths in shell commands (folder names contain spaces).
+
 # Kanban Create
 
 ## Configured task paths
 
-- PM tasks: `~/Documents/ObsidianMemory/PM/Tasks/<task-slug>.md`
-- PM projects: `~/Documents/ObsidianMemory/PM/Projects/<project-slug>.md`
-- Optional Dev kanban link: `~/Documents/ObsidianMemory/Dev Vault/projects/<project>/kanban.md#<task>`
+- PM tasks: `<vault-root>/PM/Tasks/<task-slug>.md`
+- PM projects: `<vault-root>/PM/Projects/<project-slug>.md`
+- Optional Dev kanban link: `<vault-root>/Dev Vault/projects/<project>/kanban.md#<task>`
 
 Create one PM task note per durable task. Only also update Dev project `kanban.md` when the task is code/repo-specific and a matching Dev Vault project exists.
 
@@ -25,7 +28,7 @@ created: <YYYY-MM-DD>
 updated: <YYYY-MM-DD>
 start:
 due:
-owner: Hugo
+owner: <owner>
 tags: [pm, task]
 ---
 
@@ -54,9 +57,9 @@ tags: [pm, task]
 - Repo: `<path or URL>` / none
 - Progress: `PROGRESS.md` / none
 - Feature: `feature_list.json:<id>` / none
-- PM project: `~/Documents/ObsidianMemory/PM/Projects/<project>.md` / none
-- Dev project: `~/Documents/ObsidianMemory/Dev Vault/projects/<project>/_project.md` / none
-- Dev kanban: `~/Documents/ObsidianMemory/Dev Vault/projects/<project>/kanban.md#<task>` / none
+- PM project: `<vault-root>/PM/Projects/<project>.md` / none
+- Dev project: `<vault-root>/Dev Vault/projects/<project>/_project.md` / none
+- Dev kanban: `<vault-root>/Dev Vault/projects/<project>/kanban.md#<task>` / none
 ```
 
 Ask before bulk task creation. When creating a task for an existing repo feature, link the repo `PROGRESS.md`, `feature_list.json` item, PM task, and Dev kanban item when present.

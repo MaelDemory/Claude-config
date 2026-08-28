@@ -8,7 +8,8 @@
 #   Claude Code, ajoute l'import @dev-harness.md au CLAUDE.md global, et cree ou
 #   fusionne les permissions de settings.json. Les hooks du template (rtk,
 #   notifications) ne sont PAS installes : ils reposent sur bash/osascript,
-#   specifiques a macOS. Les fichiers existants remplaces sont sauvegardes dans
+#   specifiques a macOS. Les skills optionnelles (optional\skills\) ne sont PAS
+#   installees. Les fichiers existants remplaces sont sauvegardes dans
 #   backups\. Idempotent : relancable sans effet de bord.
 # Output
 #   Journal des actions ; s'arrete a la premiere erreur.
@@ -91,7 +92,7 @@ $SettingsPath = Join-Path $Dest "settings.json"
 $Template = Get-Content (Join-Path $RepoDir "settings.template.json") -Raw | ConvertFrom-Json
 if (-not (Test-Path $SettingsPath)) {
   @{ permissions = @{ allow = $Template.permissions.allow } } |
-    ConvertTo-Json -Depth 10 | Set-Content -Path $SettingsPath -Encoding UTF8
+    ConvertTo-Json -Depth 100 | Set-Content -Path $SettingsPath -Encoding UTF8
   Write-Host "  settings.json cree avec les permissions du template"
 }
 else {

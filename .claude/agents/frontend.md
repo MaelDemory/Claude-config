@@ -2,9 +2,6 @@
 name: frontend
 description: Frontend specialist for UI implementation, design quality, component reuse, accessibility, and anti-slop review.
 model: inherit
-maxTurns: 24
-skills:
-  - frontend-design
 ---
 # Frontend Agent
 
