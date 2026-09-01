@@ -9,7 +9,8 @@
 #   fusionne les permissions de settings.json. Les hooks du template (rtk,
 #   notifications) ne sont PAS installes : ils reposent sur bash/osascript,
 #   specifiques a macOS. Les skills optionnelles (optional\skills\) ne sont PAS
-#   installees. Les fichiers existants remplaces sont sauvegardes dans
+#   installees. Initialise aussi les submodules (skills externes) si
+#   .gitmodules existe. Les fichiers existants remplaces sont sauvegardes dans
 #   backups\. Idempotent : relancable sans effet de bord.
 # Output
 #   Journal des actions ; s'arrete a la premiere erreur.
@@ -28,6 +29,17 @@ $BackupDir = Join-Path $Dest ("backups\claude-starter-" + (Get-Date -Format "yyy
 
 New-Item -ItemType Directory -Force -Path (Join-Path $Dest "agents") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $Dest "skills") | Out-Null
+
+# Certaines skills sont livrees en submodule (ex. apple-design) : apres un clone
+# sans --recurse-submodules leur dossier est vide, ce qui produirait une skill
+# cassee. On les initialise ici pour que l'install marche quel que soit le clone.
+if ((Test-Path (Join-Path $RepoDir ".gitmodules")) -and (Get-Command git -ErrorAction SilentlyContinue)) {
+  Write-Host "== Submodules"
+  git -C $RepoDir submodule update --init --recursive
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "  ATTENTION: init des submodules echouee (reseau ?) - skills concernees ignorees."
+  }
+}
 
 function Place([string]$Src, [string]$Dst) {
   if (Test-Path $Dst) {
@@ -67,6 +79,10 @@ Get-ChildItem (Join-Path $RepoDir ".claude\agents") -Filter *.md | ForEach-Objec
 
 Write-Host "== Skills -> $(Join-Path $Dest 'skills')"
 Get-ChildItem (Join-Path $RepoDir ".claude\skills") -Directory | ForEach-Object {
+  if (-not (Test-Path (Join-Path $_.FullName "SKILL.md"))) {
+    Write-Host "  ignore: $($_.Name) (pas de SKILL.md - submodule non initialise ?)"
+    return
+  }
   Place $_.FullName (Join-Path $Dest "skills\$($_.Name)")
 }
 

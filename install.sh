@@ -12,6 +12,7 @@
 #   skills optionnelles (optional/skills/) ne sont PAS installées. Requiert
 #   python3 (ou python) pour créer/fusionner settings.json hors macOS. Les
 #   fichiers existants non-symlinks sont sauvegardés dans ~/.claude/backups/.
+#   Initialise aussi les submodules (skills externes) si .gitmodules existe.
 #   Idempotent : relançable sans effet de bord.
 # Output
 #   Journal des actions sur stdout ; code retour non nul en cas d'échec.
@@ -29,6 +30,15 @@ if [ "$MODE" != "link" ] && [ "$MODE" != "copy" ]; then
 fi
 
 mkdir -p "$DEST/agents" "$DEST/skills" "$DEST/hooks"
+
+# Certaines skills sont livrées en submodule (ex. apple-design) : après un clone
+# sans --recurse-submodules leur dossier est vide, ce qui produirait une skill
+# cassée. On les initialise ici pour que l'install marche quel que soit le clone.
+if [ -f "$REPO_DIR/.gitmodules" ] && command -v git >/dev/null 2>&1; then
+  echo "== Submodules"
+  git -C "$REPO_DIR" submodule update --init --recursive || \
+    echo "  ATTENTION: init des submodules échouée (réseau ?) — skills concernées ignorées."
+fi
 
 place() {
   local src="$1" dst="$2"
@@ -52,6 +62,10 @@ done
 
 echo "== Skills -> $DEST/skills/"
 for d in "$REPO_DIR/.claude/skills/"*/; do
+  if [ ! -f "${d}SKILL.md" ]; then
+    echo "  ignoré: $(basename "$d") (pas de SKILL.md — submodule non initialisé ?)"
+    continue
+  fi
   place "${d%/}" "$DEST/skills/$(basename "$d")"
 done
 

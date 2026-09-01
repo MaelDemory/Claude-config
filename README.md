@@ -1,13 +1,13 @@
 # Claude Code Starter Config
 
-Config starter pour [Claude Code](https://code.claude.com) : 13 subagents spécialisés, 25 skills avec templates (+ 5 optionnelles), hooks et harnais de workflow (plan → build → review → simplify → test → wrap-up). Adaptée d'un harnais OpenCode (conservé dans `.opencode/` pour référence).
+Config starter pour [Claude Code](https://code.claude.com) : 13 subagents spécialisés, 26 skills avec templates (+ 5 optionnelles), hooks et harnais de workflow (plan → build → review → simplify → test → wrap-up). Adaptée d'un harnais OpenCode (conservé dans `.opencode/` pour référence).
 
 ## Installation sur un nouveau poste
 
 ### macOS / Linux
 
 ```bash
-git clone <url-du-repo> workflow-ia
+git clone --recurse-submodules <url-du-repo> workflow-ia
 cd workflow-ia
 ./install.sh
 ```
@@ -20,12 +20,12 @@ Par défaut l'installation **symlinke** vers le clone : un `git pull` dans le re
 ./install.sh copy
 ```
 
-L'installeur est idempotent (relançable sans risque) et sauvegarde tout fichier existant qu'il remplace dans `~/.claude/backups/`.
+L'installeur est idempotent (relançable sans risque) et sauvegarde tout fichier existant qu'il remplace dans `~/.claude/backups/`. Si le clone a été fait sans `--recurse-submodules`, il initialise les submodules lui-même ; une skill en submodule non initialisée est ignorée au lieu d'être installée vide.
 
 ### Windows
 
 ```powershell
-git clone <url-du-repo> workflow-ia
+git clone --recurse-submodules <url-du-repo> workflow-ia
 cd workflow-ia
 powershell -ExecutionPolicy Bypass -File install.ps1
 ```
@@ -41,7 +41,7 @@ Différences avec macOS/Linux :
 | Source (repo) | Destination | Rôle |
 |---|---|---|
 | `.claude/agents/*.md` | `~/.claude/agents/` | 13 subagents : planner, plan-contest, architecture, frontend, backend, review, test, cartography, indexer, kanban, vault, file-system, github |
-| `.claude/skills/*/` | `~/.claude/skills/` | 25 skills : create-plan, grill-me, wrap-up, frontend-design, commit, vault-search, … (5 skills personnelles supplémentaires dans `optional/skills/`, non installées — voir plus bas) |
+| `.claude/skills/*/` | `~/.claude/skills/` | 26 skills : create-plan, grill-me, wrap-up, frontend-design, commit, vault-search, … dont `apple-design` en submodule git (voir plus bas). 5 skills personnelles supplémentaires dans `optional/skills/`, non installées — voir plus bas |
 | `.claude/hooks/rtk-rewrite.sh` | `~/.claude/hooks/` | Hook PreToolUse : réécrit les commandes Bash via `rtk` (économie de tokens) ; inactif si rtk absent |
 | `dev-harness.md` | `~/.claude/dev-harness.md` + import dans `~/.claude/CLAUDE.md` | Harnais : routage des workflows, chaîne de build, discipline de code, règles vault |
 | `settings.template.json` | `~/.claude/settings.json` | Permissions (rtk, git en lecture, cmux) + hooks rtk/notifications. **Si un settings.json existe déjà : seules les permissions sont fusionnées, les hooks ne sont jamais touchés** (à reprendre manuellement du template si voulu) |
@@ -61,6 +61,18 @@ Détails dans [`dev-harness.md`](dev-harness.md).
 - `cmux` — vérification visuelle navigateur pour le travail frontend ; les skills dégradent proprement s'il est absent.
 - **Vault Obsidian** : les agents `vault`/`kanban` et les skills mémoire attendent un vault dans `~/Documents/ObsidianMemory`. Le chemin est configuré à **un seul endroit** : la section `## Vault configuration` de `dev-harness.md` (les skills référencent `<vault-root>`). Sans vault, les skills répondent « not configured » et continuent.
 - Les notifications du template utilisent `osascript`/`afplay` (macOS uniquement) ; `install.sh` les exclut automatiquement sur Linux, `install.ps1` n'installe aucun hook.
+
+## Skills externes (submodules)
+
+`apple-design` (revue UI/UX cross-platform basée sur les Human Interface Guidelines d'Apple) est un **submodule git** vers un repo upstream, pas une copie : le code reste chez son auteur et se met à jour indépendamment du reste de la config.
+
+```bash
+# mettre à jour la skill depuis l'upstream
+git submodule update --remote .claude/skills/apple-design
+git add .claude/skills/apple-design && git commit -m "chore: bump apple-design"
+```
+
+Un `git pull` normal ne bouge **pas** un submodule : il faut la commande ci-dessus (ou `git submodule update --init --recursive` après un pull qui change la révision pointée).
 
 ## Skills optionnelles (`optional/skills/`)
 
@@ -104,6 +116,7 @@ echo '.claude/settings.local.json' >> .gitignore
 - La source de vérité est le repo : édite `.claude/agents/`, `.claude/skills/`, `dev-harness.md`, puis commit. En mode symlink, tous les postes suivent via `git pull`.
 - Pour déplacer le vault Obsidian, édite uniquement la section `## Vault configuration` de `dev-harness.md`.
 - Deux skills sont renommées pour éviter des collisions : `simplify-code` (skill built-in `simplify` de Claude Code) et `cartography-map` (l'agent `cartography` garde ce nom).
+- Une skill en submodule (`apple-design`) ne s'édite pas ici : les modifications se font dans son repo upstream, sinon elles seront perdues au prochain bump.
 - `.opencode/` et `.openclaw/` sont les configs d'origine (OpenCode / OpenClaw), conservées pour référence — rien n'y est installé.
 
 ## Désinstallation
