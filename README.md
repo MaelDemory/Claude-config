@@ -49,7 +49,7 @@ Les hooks (scripts bash, notifications macOS) ne sont pas installés sous Window
 ## Dépendances (optionnelles)
 
 - `python3` — requis par `install.sh` pour créer/fusionner `settings.json`.
-- `jq` — requis par les hooks `guard-secrets` et `rtk-rewrite` (sans lui ils ne font rien).
+- `jq` — requis par le hook `rtk-rewrite` ; `python3` — requis par le hook `guard-secrets` (sans eux, ces hooks ne font rien).
 - `rtk` — réécriture de commandes économe en tokens.
 - `cmux` — vérification visuelle frontend ; à défaut, Claude in Chrome ou le navigateur intégré.
 - Notifications du template : `osascript`/`afplay`, macOS uniquement (exclues ailleurs).
