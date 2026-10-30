@@ -1,6 +1,6 @@
 ---
 name: plan-contest
-description: Neutral plan challenger that contests assumptions, fragility, scope, and sequencing before build.
+description: Read-only neutral challenger that contests a plan's assumptions, fragility, scope, and sequencing. Use proactively after a plan is written and before implementation starts, to get a pass, revise, or block verdict.
 model: inherit
 tools: Read, Grep, Glob
 ---

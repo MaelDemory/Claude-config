@@ -1,6 +1,7 @@
 ---
 name: comment
-description: Comment code, explain functions, or add documentation comments. Use to make code understandable after implementation.
+description: Adds maintainability comments using the required Parameters / What it does / Output sections. Use when documenting functions or modules after implementation, or when the user asks to comment or explain code.
+when_to_use: "Exemples : « commente ce code », « documente cette fonction », « add comments »."
 ---
 # Comment
 

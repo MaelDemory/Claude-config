@@ -1,15 +1,115 @@
 {
+  "skillListingBudgetFraction": 0.02,
+  "skillListingMaxDescChars": 500,
+  "skillOverrides": {
+    "commit": "name-only",
+    "create-pr": "name-only"
+  },
   "permissions": {
+    "defaultMode": "auto",
     "allow": [
       "Bash(rtk:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
-      "Bash(cmux browser:*)"
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git switch:*)",
+      "Bash(git checkout -b:*)",
+      "Bash(git stash:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git submodule status:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(tree:*)",
+      "Bash(pwd)",
+      "Bash(which:*)",
+      "Bash(jq:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm test:*)",
+      "Bash(yarn test:*)",
+      "Bash(bun run:*)",
+      "Bash(bun test:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pytest:*)",
+      "Bash(python3 -m pytest:*)",
+      "Bash(cargo build:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo clippy:*)",
+      "Bash(go build:*)",
+      "Bash(go test:*)",
+      "Bash(go vet:*)",
+      "Bash(make test:*)",
+      "Bash(cmux browser:*)",
+      "WebSearch"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(rtk git push:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(rtk git reset --hard:*)",
+      "Bash(git clean:*)",
+      "Bash(rtk git clean:*)",
+      "Bash(rm -rf:*)",
+      "Bash(rtk rm -rf:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(npm publish:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(rtk git push --force:*)",
+      "Bash(rtk git push -f:*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/id_rsa*)",
+      "Read(**/id_ed25519*)"
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"/hooks/session-context.sh"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"/hooks/guard-secrets.sh"
+          }
+        ]
+      },
       {
         "matcher": "Bash",
         "hooks": [

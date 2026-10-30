@@ -1,0 +1,15 @@
+# Skills externes installées depuis les submodules de vendor/.
+# Format : <nom-de-skill> <dossier contenant SKILL.md, relatif au repo>
+# Le nom doit être identique au `name:` du SKILL.md. Ne pas éditer vendor/ :
+# mettre à jour avec `git submodule update --remote vendor/<repo>`.
+
+apple-design           vendor/apple-design-skill
+resume-builder         vendor/resume-builder-skill/skill
+frontend-design        vendor/anthropics-skills/skills/frontend-design
+webapp-testing         vendor/anthropics-skills/skills/webapp-testing
+emil-design-eng        vendor/emilkowalski-skills/skills/emil-design-eng
+review-animations      vendor/emilkowalski-skills/skills/review-animations
+mobile-native          vendor/emilkowalski-skills/skills/mobile-native
+break-ui               vendor/emilkowalski-skills/skills/break-ui
+create-design-md       vendor/ibelick-ui-skills/skills/create-design-md
+web-design-guidelines  vendor/vercel-agent-skills/skills/web-design-guidelines

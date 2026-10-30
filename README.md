@@ -1,124 +1,97 @@
-# Claude Code Starter Config
+# Claude Code Config
 
-Config starter pour [Claude Code](https://code.claude.com) : 13 subagents spécialisés, 26 skills avec templates (+ 5 optionnelles), hooks et harnais de workflow (plan → build → review → simplify → test → wrap-up). Adaptée d'un harnais OpenCode (conservé dans `.opencode/` pour référence).
+Config [Claude Code](https://code.claude.com) dans l'esprit des guidelines d'Andrej Karpathy : **réfléchir avant de coder, simplicité, changements chirurgicaux, exécution pilotée par des critères vérifiables**. Une fois le but clair, Claude choisit son workflow et boucle seul jusqu'à la vérification. La mémoire de chaque projet tient dans un seul fichier : `lessons.md`.
 
-## Installation sur un nouveau poste
+## Installation
 
 ### macOS / Linux
 
 ```bash
-git clone --recurse-submodules <url-du-repo> workflow-ia
-cd workflow-ia
-./install.sh
+git clone --recurse-submodules <url-du-repo> claude-config
+cd claude-config
+./install.sh          # symlinks (défaut) : un `git pull` met à jour tout le poste
+./install.sh copy     # ou copies indépendantes
 ```
 
-C'est tout. Redémarre tes sessions Claude Code pour appliquer.
-
-Par défaut l'installation **symlinke** vers le clone : un `git pull` dans le repo met à jour la config de tout le poste. Pour des copies indépendantes :
-
-```bash
-./install.sh copy
-```
-
-L'installeur est idempotent (relançable sans risque) et sauvegarde tout fichier existant qu'il remplace dans `~/.claude/backups/`. Si le clone a été fait sans `--recurse-submodules`, il initialise les submodules lui-même ; une skill en submodule non initialisée est ignorée au lieu d'être installée vide.
+Redémarre tes sessions Claude Code pour appliquer. L'installeur est idempotent : relance-le après chaque `git pull` qui ajoute ou supprime des fichiers. Il sauvegarde ce qu'il remplace dans `~/.claude/backups/`, initialise les submodules si besoin et retire les symlinks devenus orphelins (agents/skills supprimés du repo).
 
 ### Windows
 
 ```powershell
-git clone --recurse-submodules <url-du-repo> workflow-ia
-cd workflow-ia
-powershell -ExecutionPolicy Bypass -File install.ps1
+git clone --recurse-submodules <url-du-repo> claude-config
+cd claude-config
+powershell -ExecutionPolicy Bypass -File install.ps1          # copie (défaut)
+powershell -ExecutionPolicy Bypass -File install.ps1 -Mode link   # symlinks (mode développeur ou admin)
 ```
 
-Différences avec macOS/Linux :
-
-- Mode **copie** par défaut (les symlinks Windows exigent le mode développeur ou une console admin) : après un `git pull`, relance `install.ps1` pour propager. Pour des symlinks quand même : `install.ps1 -Mode link`.
-- Les **hooks du template ne sont pas installés** (rtk-rewrite est un script bash, les notifications utilisent `osascript`/`afplay` — macOS uniquement). Seules les permissions sont créées/fusionnées dans `settings.json`.
-- Sous **Git Bash/WSL**, `./install.sh copy` fonctionne aussi.
+Les hooks (scripts bash, notifications macOS) ne sont pas installés sous Windows : seules les permissions sont fusionnées dans `settings.json`. Sous Git Bash/WSL, `./install.sh copy` fonctionne aussi.
 
 ## Ce qui est installé
 
 | Source (repo) | Destination | Rôle |
 |---|---|---|
-| `.claude/agents/*.md` | `~/.claude/agents/` | 13 subagents : planner, plan-contest, architecture, frontend, backend, review, test, cartography, indexer, kanban, vault, file-system, github |
-| `.claude/skills/*/` | `~/.claude/skills/` | 26 skills : create-plan, grill-me, wrap-up, frontend-design, commit, vault-search, … dont `apple-design` en submodule git (voir plus bas). 5 skills personnelles supplémentaires dans `optional/skills/`, non installées — voir plus bas |
-| `.claude/hooks/rtk-rewrite.sh` | `~/.claude/hooks/` | Hook PreToolUse : réécrit les commandes Bash via `rtk` (économie de tokens) ; inactif si rtk absent |
-| `dev-harness.md` | `~/.claude/dev-harness.md` + import dans `~/.claude/CLAUDE.md` | Harnais : routage des workflows, chaîne de build, discipline de code, règles vault |
-| `settings.template.json` | `~/.claude/settings.json` | Permissions (rtk, git en lecture, cmux) + hooks rtk/notifications. **Si un settings.json existe déjà : seules les permissions sont fusionnées, les hooks ne sont jamais touchés** (à reprendre manuellement du template si voulu) |
+| `dev-harness.md` | `~/.claude/dev-harness.md` + import dans `~/.claude/CLAUDE.md` | Le harnais : les 4 principes, `lessons.md`, autonomie et garde-fous, workflow proportionné |
+| `.claude/agents/*.md` | `~/.claude/agents/` | 8 subagents : `planner`, `plan-contest`, `architecture`, `frontend`, `backend`, `review`, `test`, `github` |
+| `.claude/skills/*/` | `~/.claude/skills/` | 13 skills maison : `ship` (livraison de bout en bout), `add-skill` (ajouter une skill au repo), `create-plan`, `grill-me`, `implementation-review`, `review-code`, `simplify-code`, `test-code`, `wrap-up`, `commit`, `create-pr`, `comment`, `create-architecture` |
+| `external-skills.txt` → `vendor/` | `~/.claude/skills/` | 10 skills externes (submodules), voir plus bas |
+| `.claude/hooks/*.sh` | `~/.claude/hooks/` | `session-context.sh` (SessionStart : état git, plans ouverts et `lessons.md` injectés à chaque session) ; `guard-secrets.sh` (bloque la lecture de secrets en Bash) ; `rtk-rewrite.sh` (réécrit les commandes via `rtk` pour économiser des tokens, inactif si rtk absent) |
+| `settings.template.json` | `~/.claude/settings.json` | **allow** large (lecture, git local, tests/builds courants, gh en lecture), **ask** pour l'irréversible (push, `reset --hard`, `rm -rf`, PR, publish), **deny** pour les secrets et le force-push, hooks. Réglages de découverte des skills : budget de la liste porté à 2 % du contexte (`skillListingBudgetFraction`), descriptions plafonnées à 500 caractères (`skillListingMaxDescChars`), `commit`/`create-pr` listés par leur seul nom (`skillOverrides`). Fusion additive : rien n'est jamais retiré ni écrasé dans un settings.json existant |
 
-## Workflow fourni par le harnais
+## Comment ça marche
 
-- **Nouveau projet** : `grill-me` → vault `create-project` → Plan Mode / `planner` → `create-plan` + `plan-contest`.
-- **Onboarding d'un codebase existant** : `onboard-project` → `cartography` → `indexer` → `memory-write`.
-- **Tâche courante** : `start-session` → plan → chaîne de build automatique (frontend/backend → `implementation-review` → `review-code` → `simplify-code` → tests → `wrap-up`).
+- **Avant de coder** : Claude énonce ses hypothèses, présente les interprétations concurrentes et pose ses questions *avant* d'écrire du code, pas après une erreur.
+- **Pendant** : code minimal, aucun changement hors demande ; chaque ligne modifiée se rattache à la requête.
+- **Boucle autonome** : la tâche devient un critère vérifiable (un test, une commande) ; Claude implémente, vérifie, corrige, et s'arrête après deux échecs avec les preuves.
+- **Workflow proportionné** : petit changement = vérification seule ; moyen = review + tests ; gros = plan + `plan-contest` + review + simplify + tests. `ship` déroule tout.
+- **`lessons.md`** : à la racine de chaque projet, les règles à connaître. Injecté à chaque session par le hook ; après chaque correction de ta part, Claude y ajoute la règle (`- <règle>. Why: <raison>.`) pour ne jamais refaire la même erreur.
+- **Skills trouvées au bon moment** : chaque skill maison a des déclencheurs FR/EN (`when_to_use`), et les agents préchargent la skill dont ils suivent le gabarit (`planner` → `create-plan`, `review` → `implementation-review` + `review-code`, `test` → `test-code`, `frontend` → `frontend-design`). `/doctor` estime le coût de la liste des skills, `/context` montre sa taille réelle.
+- **Garde-fous** : commits, push, PR et publication demandent toujours ta confirmation.
 
-Détails dans [`dev-harness.md`](dev-harness.md).
+## Dépendances (optionnelles)
 
-## Dépendances par poste (optionnelles)
-
-- `python3` (ou `python`) — requis par `install.sh` pour créer/fusionner `settings.json` (sauf création simple sur macOS). Sans lui, l'installeur avertit et saute cette étape.
-- `rtk` + `jq` — réécriture de commandes pour économiser des tokens (le hook a besoin des deux). Sans eux, le hook se désactive tout seul. Si tu utilises déjà `rtk hook claude` dans tes settings, n'ajoute pas le hook du template (doublon).
-- `cmux` — vérification visuelle navigateur pour le travail frontend ; les skills dégradent proprement s'il est absent.
-- **Vault Obsidian** : les agents `vault`/`kanban` et les skills mémoire attendent un vault dans `~/Documents/ObsidianMemory`. Le chemin est configuré à **un seul endroit** : la section `## Vault configuration` de `dev-harness.md` (les skills référencent `<vault-root>`). Sans vault, les skills répondent « not configured » et continuent.
-- Les notifications du template utilisent `osascript`/`afplay` (macOS uniquement) ; `install.sh` les exclut automatiquement sur Linux, `install.ps1` n'installe aucun hook.
+- `python3` — requis par `install.sh` pour créer/fusionner `settings.json`.
+- `jq` — requis par le hook `rtk-rewrite` ; `python3` — requis par le hook `guard-secrets` (sans eux, ces hooks ne font rien).
+- `rtk` — réécriture de commandes économe en tokens.
+- `cmux` — vérification visuelle frontend ; à défaut, Claude in Chrome ou le navigateur intégré.
+- Notifications du template : `osascript`/`afplay`, macOS uniquement (exclues ailleurs).
 
 ## Skills externes (submodules)
 
-`apple-design` (revue UI/UX cross-platform basée sur les Human Interface Guidelines d'Apple) est un **submodule git** vers un repo upstream, pas une copie : le code reste chez son auteur et se met à jour indépendamment du reste de la config.
+Les skills tierces restent chez leurs auteurs : chaque repo est un submodule léger (`shallow`) dans `vendor/`, et `external-skills.txt` liste les skills à installer (`<nom> <dossier du SKILL.md>`). Ne les édite pas ici.
+
+| Skill | Repo | Rôle |
+|---|---|---|
+| `frontend-design` | [anthropics/skills](https://github.com/anthropics/skills) | Direction artistique : sujet, typographie, palette, retenue, textes d'interface |
+| `webapp-testing` | [anthropics/skills](https://github.com/anthropics/skills) | Tests navigateur Playwright headless, logs console, captures (requiert `pip install playwright && playwright install chromium`) |
+| `emil-design-eng` | [emilkowalski/skills](https://github.com/emilkowalski/skills) | Finition des interactions : boutons, popovers, transitions, ressorts |
+| `review-animations` | [emilkowalski/skills](https://github.com/emilkowalski/skills) | Revue des animations (durées, courbes, mouvements inutiles) |
+| `mobile-native` | [emilkowalski/skills](https://github.com/emilkowalski/skills) | Web app sur téléphone : tap, scroll, zoom des champs, encoche |
+| `break-ui` | [emilkowalski/skills](https://github.com/emilkowalski/skills) | Stress-test d'écrans avec des données extrêmes (noms longs, listes vides…) |
+| `create-design-md` | [ibelick/ui-skills](https://github.com/ibelick/ui-skills) | Crée/met à jour `DESIGN.md` à partir du code ou d'un site existant |
+| `web-design-guidelines` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | Revue accessibilité, formulaires, focus, états (règles récupérées en ligne à chaque usage) |
+| `apple-design` | [dickwu/apple-design-skill](https://github.com/dickwu/apple-design-skill) | Revue UI/UX selon les Human Interface Guidelines |
+| `resume-builder` | [dabydat/resume-builder-skill](https://github.com/dabydat/resume-builder-skill) | CV et lettres, optimisation ATS |
+
+Ajouter une skill (externe ou maison) : demande-le simplement à Claude — la skill `add-skill` l'évalue (pertinence, doublons, sécurité, licence), l'ajoute au bon endroit, puis lance `./scripts/check.sh` et `./install.sh`. À la main : `git submodule add --depth 1 <url> vendor/<repo>`, une ligne dans `external-skills.txt`, puis `./install.sh`. Mettre à jour :
 
 ```bash
-# mettre à jour la skill depuis l'upstream
-git submodule update --remote .claude/skills/apple-design
-git add .claude/skills/apple-design && git commit -m "chore: bump apple-design"
+git submodule update --remote vendor/<repo>
+git add vendor/<repo> && git commit -m "chore: bump <repo>"
 ```
-
-Un `git pull` normal ne bouge **pas** un submodule : il faut la commande ci-dessus (ou `git submodule update --init --recursive` après un pull qui change la révision pointée).
 
 ## Skills optionnelles (`optional/skills/`)
 
-5 skills personnelles (recherche d'investissement Notion, rédaction LinkedIn/Medium) sont hors de `.claude/` et **ne sont pas installées** : `asset-research-skill`, `sector-research-skill`, `content-post`, `content-article`, `content-weekly`. Elles supposent un MCP Notion configuré et/ou des guides dans le Content Vault. Pour les activer :
+5 skills personnelles non installées par défaut : `asset-research-skill`, `sector-research-skill` (MCP Notion), `content-post`, `content-article`, `content-weekly` (guides dans `~/Documents/ObsidianMemory/Content Vault/guides/`). Pour en activer une : `cp -R optional/skills/<nom> .claude/skills/` puis `./install.sh`.
 
-```bash
-cp -R optional/skills/<nom> .claude/skills/   # puis relance ./install.sh
-```
+## Utiliser la config dans un projet
 
-## Ajouter la config à un projet existant
+Installée globalement, elle s'applique déjà à tous tes projets ; il suffit d'y laisser Claude créer `lessons.md` au fil des corrections. Pour la versionner *dans* un repo (équipe, variante figée), copie `.claude/agents`, `.claude/skills`, `.claude/hooks` et `dev-harness.md` dans le projet, et ajoute `@dev-harness.md` à son `CLAUDE.md`. Dans un `.claude/settings.json` projet, remplace `${CLAUDE_CONFIG_DIR:-$HOME/.claude}` par `$CLAUDE_PROJECT_DIR/.claude` dans les chemins de hooks. La version projet a priorité sur la globale.
 
-Si tu as installé la config globalement (`./install.sh`), **il n'y a rien à faire** : agents, skills et harnais s'appliquent déjà à tous tes projets.
+## Modifier la config
 
-Embarquer la config *dans* un repo n'est utile que pour la **versionner avec le projet** (la partager avec une équipe, ou figer une variante par projet) :
-
-```bash
-cd /chemin/vers/mon-projet
-
-# agents + skills + hooks versionnés dans le projet
-mkdir -p .claude
-cp -R /chemin/vers/workflow-ia/.claude/agents .claude/agents
-cp -R /chemin/vers/workflow-ia/.claude/skills .claude/skills
-cp -R /chemin/vers/workflow-ia/.claude/hooks  .claude/hooks
-
-# harnais importé depuis le CLAUDE.md du projet
-cp /chemin/vers/workflow-ia/dev-harness.md .
-printf '# CLAUDE.md\n\n@dev-harness.md\n' > CLAUDE.md   # ou ajoute juste la ligne @dev-harness.md à ton CLAUDE.md existant
-
-echo '.claude/settings.local.json' >> .gitignore
-```
-
-À savoir :
-
-- Si le projet a déjà un `.claude/` ou un `CLAUDE.md`, complète-les au lieu d'écraser (copie les sous-dossiers manquants, ajoute la ligne `@dev-harness.md`).
-- En cas de doublon de nom avec la config globale, la version **projet** a priorité — inutile de désinstaller le global.
-- Pour des settings partagés au niveau projet, pars de `settings.template.json` vers `.claude/settings.json` en remplaçant `${CLAUDE_CONFIG_DIR:-$HOME/.claude}` par `$CLAUDE_PROJECT_DIR/.claude` dans le chemin du hook.
-- Ne copie que ce qui sert au projet : pour un backend seul, par exemple, les skills vault/kanban peuvent être omises. Les skills personnelles (`optional/skills/`) ne se copient que si le projet en a l'usage.
-
-## Personnalisation
-
-- La source de vérité est le repo : édite `.claude/agents/`, `.claude/skills/`, `dev-harness.md`, puis commit. En mode symlink, tous les postes suivent via `git pull`.
-- Pour déplacer le vault Obsidian, édite uniquement la section `## Vault configuration` de `dev-harness.md`.
-- Deux skills sont renommées pour éviter des collisions : `simplify-code` (skill built-in `simplify` de Claude Code) et `cartography-map` (l'agent `cartography` garde ce nom).
-- Une skill en submodule (`apple-design`) ne s'édite pas ici : les modifications se font dans son repo upstream, sinon elles seront perdues au prochain bump.
-- `.opencode/` et `.openclaw/` sont les configs d'origine (OpenCode / OpenClaw), conservées pour référence — rien n'y est installé.
+- La source de vérité est ce repo : édite, puis `./scripts/check.sh` (frontmatter, chemins en dur, JSON, syntaxe bash, idempotence d'`install.sh`). La CI GitHub Actions le rejoue et teste `install.ps1` sous Windows.
+- `simplify-code` porte ce nom pour ne pas entrer en collision avec la skill intégrée `simplify`.
 
 ## Désinstallation
 
-Supprime les symlinks/copies dans `~/.claude/agents`, `~/.claude/skills`, `~/.claude/hooks/rtk-rewrite.sh`, `~/.claude/dev-harness.md`, et retire la section `## Dev Harness` de `~/.claude/CLAUDE.md`.
+Supprime les symlinks/copies dans `~/.claude/agents`, `~/.claude/skills`, `~/.claude/hooks/` et `~/.claude/dev-harness.md`, puis retire la section `## Dev Harness` de `~/.claude/CLAUDE.md`.

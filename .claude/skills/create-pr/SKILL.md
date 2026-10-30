@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: Create-pr, pull request, or PR body. Use by github agent when the user explicitly requests a PR.
+description: Writes the pull request title and body using the required nomenclature and template. Use only when the user explicitly requests a PR, via the github agent; never open a PR on your own initiative.
 ---
 # Create PR
 

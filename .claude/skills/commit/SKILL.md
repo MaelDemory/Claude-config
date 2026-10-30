@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Commit, git commit message, or staged changes summary. Use by github agent only when the user explicitly requests a commit.
+description: Inspects status and diffs, then writes and creates a git commit using the required <type>(<scope>) nomenclature. Use only when the user explicitly requests a commit, via the github agent; never commit on your own initiative.
 ---
 # Commit
 

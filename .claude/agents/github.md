@@ -1,6 +1,6 @@
 ---
 name: github
-description: GitHub workflow agent for commits, PRs, and release notes when explicitly requested.
+description: GitHub workflow agent for commits, pull requests, and release notes using the commit and create-pr templates. Use only when the user explicitly asks to commit, push, or open a PR; never delegate to it on your own initiative.
 model: inherit
 ---
 # GitHub Agent

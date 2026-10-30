@@ -1,6 +1,6 @@
 ---
 name: backend
-description: Backend specialist for APIs, data flow, persistence, modular services, and production-quality server code.
+description: Backend specialist for APIs, data flow, persistence, validation, and modular production-quality server code. Use proactively when implementing or changing APIs, services, jobs, database schemas or migrations, auth, or integrations.
 model: inherit
 ---
 # Backend Agent

@@ -1,6 +1,7 @@
 ---
 name: test-code
-description: Test code, write tests, or validate implementation. Use when creating focused tests from the plan/spec rather than from implementation details.
+description: Designs and writes focused tests from the plan, spec, and public contracts rather than implementation details. Use after implementing a feature or fix, when tests are missing, or when validating behavior; used by the test agent.
+when_to_use: "Exemples : « écris des tests », « teste cette fonction », « ajoute des tests », « write tests »."
 ---
 # Test Code
 

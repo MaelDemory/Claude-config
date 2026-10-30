@@ -1,9 +1,8 @@
 ---
 name: create-plan
-description: Create-plan, PLAN file, TASK_CONTEXT.md, implementation plan, or planning template. Use by the planner subagent to write PLAN-*.md, maintain TASK_CONTEXT.md, and invoke plan-contest.
+description: Writes PLAN-*.md from the required template and sends the plan to plan-contest. Use when the planner subagent or main session plans non-trivial implementation work before building.
+when_to_use: "Exemples : « fais un plan », « planifie cette feature », « plan this », avant un changement multi-fichiers."
 ---
-
-Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the global dev harness (`## Vault configuration` in `dev-harness.md`); defaults `~/Documents/ObsidianMemory` and `~/Documents/ObsidianLegacy`. Always quote vault paths in shell commands (folder names contain spaces).
 
 # Create Plan
 
@@ -21,11 +20,8 @@ Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the glob
 ## Context read
 - `<path>` — <why it matters>
 
-## State alignment
-- Progress: `PROGRESS.md` — <active state or missing>
-- Decisions: `DECISIONS.md` — <constraints affecting this plan or missing>
-- Feature list: `feature_list.json` — <feature id/status or missing>
-- Kanban: `<vault-root>/PM/Tasks/<task>.md` or Dev Vault `projects/<project>/kanban.md` — <task/status or none>
+## Lessons applied
+- `lessons.md` — <rules that constrain this plan, or none>
 
 ## Assumptions
 - <assumption and impact if wrong>
@@ -34,8 +30,8 @@ Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the glob
 - `<path or area>` — <planned edit>
 
 ## Implementation steps
-1. <smallest safe step>
-2. <next step>
+1. <smallest safe step> → verify: <check>
+2. <next step> → verify: <check>
 
 ## Subagents / skills
 - `<agent or skill>` — <when to use>
@@ -51,60 +47,11 @@ Vault roots: `<vault-root>` and `<legacy-vault-root>` are configured in the glob
 - <revision made>
 ```
 
-## Required `TASK_CONTEXT.md` template
-
-Create or update `TASK_CONTEXT.md` next to the project's durable state files (`PROGRESS.md`, `DECISIONS.md`, `feature_list.json`) when the task is non-trivial or should be handed to the build phase (the main session executing the build chain).
-
-Use this exact section structure:
-
-```markdown
-# Task Context
-
-## Goal
-<one concise paragraph describing the desired implementation outcome and scope boundaries>
-
-## Files read
-- `<path>`
-
-## Assumptions
-- <assumption or constraint the build agent must preserve>
-
-## Files to change
-
-### Update `<path>`
-
-#### 1. <change area>
-<specific build-ready instructions, constraints, schemas, formulas, examples, or sequencing notes>
-
-## Files not to change
-- `<path or area>`
-
-## Acceptance criteria
-- <observable behavior or artifact required for completion>
-
-## Verification
-- `<command>`
-- <manual check if needed>
-
-## Open questions
-- <blocking or non-blocking question, or `None`>
-```
-
-TASK_CONTEXT.md rules:
-- `TASK_CONTEXT.md` is the active handoff file for the build phase; keep it compact but complete enough that the implementer does not need to rediscover the full task.
-- Include every file already read that materially shaped the plan.
-- Preserve explicit user constraints exactly, especially “do not change” areas, formulas, schemas, compatibility requirements, and verification commands.
-- If there are multiple files to change, add one `### Update <path>` / `### Add <path>` / `### Remove <path>` subsection per file or area.
-- Use nested numbered subsections under each file only when they clarify implementation sequencing.
-- Keep open questions separated from assumptions; mark non-blocking questions as non-blocking.
-- Do not include secrets, credentials, or unrelated repo history.
-
 Rules:
 - Save as `PLAN-<short-name>.md` when writing a plan file.
-- Save/update `TASK_CONTEXT.md` when a durable build handoff is useful or when the user asks for TASK_CONTEXT integration.
 - For non-trivial work, ask `plan-contest` to challenge it and revise.
 - Plan one active feature/task at a time unless the user explicitly asks for a roadmap.
-- If a matching kanban task exists, include how the plan will keep repo progress, vault progress, and kanban status aligned.
+- Each implementation step ends with how it is verified (`step → verify: check`).
 
 ## Plan quality checklist
 
@@ -115,7 +62,7 @@ Rules:
 - Sequenced safely: risky migrations, public contract changes, and destructive edits are isolated and reversible where possible.
 - Verification-specific: each check says what behavior or risk it proves, not just “run tests.”
 - Handoff-ready: identifies which subagents/skills to use and when.
-- Context-ready: `TASK_CONTEXT.md` captures exact files read, assumptions, files to change/not change, acceptance criteria, verification, and open questions.
+- Lesson-aware: rules from `lessons.md` that apply are listed and respected.
 
 ## Good vs bad plan entries
 

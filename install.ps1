@@ -6,9 +6,10 @@
 # What it does
 #   Copie/symlinke les agents, skills et dev-harness.md dans la config globale
 #   Claude Code, ajoute l'import @dev-harness.md au CLAUDE.md global, et cree ou
-#   fusionne les permissions de settings.json. Les hooks du template (rtk,
-#   notifications) ne sont PAS installes : ils reposent sur bash/osascript,
-#   specifiques a macOS. Les skills optionnelles (optional\skills\) ne sont PAS
+#   fusionne les permissions de settings.json (regles allow/ask/deny unies,
+#   defaultMode pose s'il est absent). Les hooks du template (rtk, contexte de
+#   session, notifications) ne sont PAS installes : ils reposent sur
+#   bash/osascript. Les skills optionnelles (optional\skills\) ne sont PAS
 #   installees. Initialise aussi les submodules (skills externes) si
 #   .gitmodules existe. Les fichiers existants remplaces sont sauvegardes dans
 #   backups\. Idempotent : relancable sans effet de bord.
@@ -79,11 +80,33 @@ Get-ChildItem (Join-Path $RepoDir ".claude\agents") -Filter *.md | ForEach-Objec
 
 Write-Host "== Skills -> $(Join-Path $Dest 'skills')"
 Get-ChildItem (Join-Path $RepoDir ".claude\skills") -Directory | ForEach-Object {
-  if (-not (Test-Path (Join-Path $_.FullName "SKILL.md"))) {
-    Write-Host "  ignore: $($_.Name) (pas de SKILL.md - submodule non initialise ?)"
+  Place $_.FullName (Join-Path $Dest "skills\$($_.Name)")
+}
+
+Write-Host "== Skills externes (external-skills.txt) -> $(Join-Path $Dest 'skills')"
+Get-Content (Join-Path $RepoDir "external-skills.txt") | ForEach-Object {
+  $Line = $_.Trim()
+  if (-not $Line -or $Line.StartsWith("#")) { return }
+  $Name, $Path = $Line -split '\s+', 2
+  $Src = Join-Path $RepoDir $Path
+  if (-not (Test-Path (Join-Path $Src "SKILL.md"))) {
+    Write-Host "  ignore: $Name (pas de $Path/SKILL.md - submodule non initialise ?)"
     return
   }
-  Place $_.FullName (Join-Path $Dest "skills\$($_.Name)")
+  Place $Src (Join-Path $Dest "skills\$Name")
+}
+
+Write-Host "== Nettoyage des liens orphelins"
+# Un agent/skill supprime du repo laisse un symlink casse dans $Dest : on ne
+# retire que les liens qui pointent dans ce repo vers une cible absente.
+foreach ($Sub in @("agents", "skills")) {
+  Get-ChildItem (Join-Path $Dest $Sub) -Force | Where-Object { $_.LinkType } | ForEach-Object {
+    $Target = @($_.Target)[0]
+    if ($Target -and $Target.StartsWith($RepoDir) -and -not (Test-Path $Target)) {
+      if ($_.PSIsContainer) { [System.IO.Directory]::Delete($_.FullName, $false) } else { [System.IO.File]::Delete($_.FullName) }
+      Write-Host "  retire: $($_.FullName)"
+    }
+  }
 }
 
 Write-Host "== Harnais -> $(Join-Path $Dest 'dev-harness.md')"
@@ -103,32 +126,51 @@ else {
   Write-Host "  import deja present"
 }
 
-Write-Host "== Settings (permissions uniquement ; hooks du template = macOS, ignores)"
+Write-Host "== Settings (permissions uniquement ; hooks du template = bash/macOS, ignores)"
 $SettingsPath = Join-Path $Dest "settings.json"
 $Template = Get-Content (Join-Path $RepoDir "settings.template.json") -Raw | ConvertFrom-Json
-if (-not (Test-Path $SettingsPath)) {
-  @{ permissions = @{ allow = $Template.permissions.allow } } |
-    ConvertTo-Json -Depth 100 | Set-Content -Path $SettingsPath -Encoding UTF8
-  Write-Host "  settings.json cree avec les permissions du template"
+$Settings = if (Test-Path $SettingsPath) { Get-Content $SettingsPath -Raw | ConvertFrom-Json } else { [pscustomobject]@{} }
+if (-not $Settings.PSObject.Properties["permissions"]) {
+  $Settings | Add-Member -NotePropertyName permissions -NotePropertyValue ([pscustomobject]@{})
 }
-else {
-  $Settings = Get-Content $SettingsPath -Raw | ConvertFrom-Json
-  if (-not $Settings.PSObject.Properties["permissions"]) {
-    $Settings | Add-Member -NotePropertyName permissions -NotePropertyValue ([pscustomobject]@{ allow = @() })
+$Added = 0
+foreach ($Key in @("allow", "ask", "deny")) {
+  if (-not $Template.permissions.PSObject.Properties[$Key]) { continue }
+  if (-not $Settings.permissions.PSObject.Properties[$Key]) {
+    $Settings.permissions | Add-Member -NotePropertyName $Key -NotePropertyValue @()
   }
-  if (-not $Settings.permissions.PSObject.Properties["allow"]) {
-    $Settings.permissions | Add-Member -NotePropertyName allow -NotePropertyValue @()
-  }
-  $Added = 0
-  foreach ($Rule in $Template.permissions.allow) {
-    if ($Settings.permissions.allow -notcontains $Rule) {
-      $Settings.permissions.allow = @($Settings.permissions.allow) + $Rule
+  foreach ($Rule in $Template.permissions.$Key) {
+    if ($Settings.permissions.$Key -notcontains $Rule) {
+      $Settings.permissions.$Key = @($Settings.permissions.$Key) + $Rule
       $Added++
     }
   }
-  $Settings | ConvertTo-Json -Depth 100 | Set-Content -Path $SettingsPath -Encoding UTF8
-  Write-Host "  permissions fusionnees ($Added regle(s) ajoutee(s)) ; hooks non modifies"
 }
+if ($Template.permissions.PSObject.Properties["defaultMode"] -and -not $Settings.permissions.PSObject.Properties["defaultMode"]) {
+  $Settings.permissions | Add-Member -NotePropertyName defaultMode -NotePropertyValue $Template.permissions.defaultMode
+}
+# Autres cles (budget des skills, skillOverrides...) : posees seulement si
+# absentes ; pour un objet, cle par cle.
+foreach ($Prop in $Template.PSObject.Properties) {
+  if ($Prop.Name -in @("permissions", "hooks")) { continue }
+  if ($Prop.Value -is [System.Management.Automation.PSCustomObject]) {
+    if (-not $Settings.PSObject.Properties[$Prop.Name]) {
+      $Settings | Add-Member -NotePropertyName $Prop.Name -NotePropertyValue ([pscustomobject]@{})
+    }
+    foreach ($Sub in $Prop.Value.PSObject.Properties) {
+      if (-not $Settings.($Prop.Name).PSObject.Properties[$Sub.Name]) {
+        $Settings.($Prop.Name) | Add-Member -NotePropertyName $Sub.Name -NotePropertyValue $Sub.Value
+      }
+    }
+  }
+  elseif (-not $Settings.PSObject.Properties[$Prop.Name]) {
+    $Settings | Add-Member -NotePropertyName $Prop.Name -NotePropertyValue $Prop.Value
+  }
+}
+# UTF-8 sans BOM : Set-Content -Encoding UTF8 ajoute un BOM sous PowerShell 5.1,
+# ce qui peut casser la lecture JSON de settings.json.
+[System.IO.File]::WriteAllText($SettingsPath, ($Settings | ConvertTo-Json -Depth 100), (New-Object System.Text.UTF8Encoding $false))
+Write-Host "  permissions fusionnees ($Added regle(s) ajoutee(s)) ; hooks non modifies"
 
 Write-Host ""
 Write-Host "Installation terminee ($Mode). Redemarre les sessions Claude Code pour appliquer."
