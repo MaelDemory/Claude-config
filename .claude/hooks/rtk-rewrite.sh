@@ -1,6 +1,6 @@
 #!/bin/bash
 # PreToolUse hook (Bash matcher) — rewrites commands through `rtk rewrite`
-# for token savings. Port of the OpenCode rtk plugin (.opencode/plugins/rtk.ts).
+# for token savings.
 # All rewrite logic lives in `rtk rewrite`; this script only delegates.
 # Requires: rtk >= 0.23.0 in PATH. If rtk is missing or the rewrite fails,
 # the command passes through unchanged (empty output, exit 0).

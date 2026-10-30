@@ -1,0 +1,45 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unix:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Validate config and install.sh idempotence
+        run: ./scripts/check.sh
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: install.ps1 twice (copy mode) + settings.json check
+        shell: pwsh
+        run: |
+          $env:CLAUDE_CONFIG_DIR = Join-Path $env:RUNNER_TEMP "claude"
+          ./install.ps1
+          ./install.ps1
+          $settings = Join-Path $env:CLAUDE_CONFIG_DIR "settings.json"
+          $bytes = [System.IO.File]::ReadAllBytes($settings)
+          if ($bytes[0] -eq 0xEF) { throw "settings.json has a UTF-8 BOM" }
+          $json = Get-Content $settings -Raw | ConvertFrom-Json
+          if (-not $json.permissions.deny) { throw "deny rules missing" }
+          if (-not (Test-Path (Join-Path $env:CLAUDE_CONFIG_DIR "skills/ship/SKILL.md"))) { throw "skills not installed" }
+      - name: install.ps1 under Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $env:CLAUDE_CONFIG_DIR = Join-Path $env:RUNNER_TEMP "claude51"
+          ./install.ps1
+          ./install.ps1
+          Get-Content (Join-Path $env:CLAUDE_CONFIG_DIR "settings.json") -Raw | ConvertFrom-Json | Out-Null

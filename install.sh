@@ -7,10 +7,11 @@
 # What it does
 #   Symlinke/copie les agents, skills, hooks et le harnais dev-harness.md dans
 #   la config globale Claude Code, ajoute l'import @dev-harness.md au CLAUDE.md
-#   global, et installe/fusionne settings.json (permissions ; hooks uniquement
-#   à la création, et hooks de notification macOS exclus hors Darwin). Les
+#   global, et crée/fusionne settings.json : règles allow/ask/deny unies,
+#   defaultMode posé s'il est absent, hooks du template ajoutés s'ils manquent
+#   (jamais supprimés ; hooks osascript/afplay exclus hors macOS). Les
 #   skills optionnelles (optional/skills/) ne sont PAS installées. Requiert
-#   python3 (ou python) pour créer/fusionner settings.json hors macOS. Les
+#   python3 (ou python) pour créer/fusionner settings.json. Les
 #   fichiers existants non-symlinks sont sauvegardés dans ~/.claude/backups/.
 #   Initialise aussi les submodules (skills externes) si .gitmodules existe.
 #   Idempotent : relançable sans effet de bord.
@@ -62,16 +63,35 @@ done
 
 echo "== Skills -> $DEST/skills/"
 for d in "$REPO_DIR/.claude/skills/"*/; do
-  if [ ! -f "${d}SKILL.md" ]; then
-    echo "  ignoré: $(basename "$d") (pas de SKILL.md — submodule non initialisé ?)"
-    continue
-  fi
   place "${d%/}" "$DEST/skills/$(basename "$d")"
 done
 
+echo "== Skills externes (external-skills.txt) -> $DEST/skills/"
+while read -r name path; do
+  case "$name" in ''|'#'*) continue ;; esac
+  if [ ! -f "$REPO_DIR/$path/SKILL.md" ]; then
+    echo "  ignoré: $name (pas de $path/SKILL.md — submodule non initialisé ?)"
+    continue
+  fi
+  place "$REPO_DIR/$path" "$DEST/skills/$name"
+done < "$REPO_DIR/external-skills.txt"
+
 echo "== Hooks -> $DEST/hooks/"
-place "$REPO_DIR/.claude/hooks/rtk-rewrite.sh" "$DEST/hooks/rtk-rewrite.sh"
-chmod +x "$DEST/hooks/rtk-rewrite.sh" 2>/dev/null || true
+for f in "$REPO_DIR/.claude/hooks/"*.sh; do
+  place "$f" "$DEST/hooks/$(basename "$f")"
+  chmod +x "$DEST/hooks/$(basename "$f")" 2>/dev/null || true
+done
+
+echo "== Nettoyage des liens orphelins"
+# Un agent/skill/hook supprimé du repo laisse un symlink cassé dans $DEST :
+# on ne retire que les liens qui pointent dans ce repo vers une cible absente.
+for link in "$DEST/agents/"* "$DEST/skills/"* "$DEST/hooks/"*; do
+  [ -L "$link" ] || continue
+  target=$(readlink "$link")
+  case "$target" in
+    "$REPO_DIR"/*) [ -e "$target" ] || { rm "$link"; echo "  retiré: $link"; } ;;
+  esac
+done
 
 echo "== Harnais -> $DEST/dev-harness.md"
 place "$REPO_DIR/dev-harness.md" "$DEST/dev-harness.md"
@@ -97,47 +117,53 @@ for cand in python3 python; do
     break
   fi
 done
-if [ ! -f "$DEST/settings.json" ]; then
-  if [ "$(uname)" = "Darwin" ]; then
+if [ -z "$PYBIN" ]; then
+  if [ ! -f "$DEST/settings.json" ] && [ "$(uname)" = "Darwin" ]; then
     cp "$REPO_DIR/settings.template.json" "$DEST/settings.json"
-    echo "  settings.json créé depuis settings.template.json (permissions + hooks)"
-  elif [ -n "$PYBIN" ]; then
-    # Hors macOS : les hooks Notification/Stop (osascript/afplay) sont exclus ;
-    # le hook PreToolUse rtk (bash + jq) est conservé.
-    "$PYBIN" - "$REPO_DIR/settings.template.json" "$DEST/settings.json" <<'EOF'
-import json, sys
-tmpl = json.load(open(sys.argv[1]))
-hooks = tmpl.get("hooks", {})
-hooks.pop("Notification", None)
-hooks.pop("Stop", None)
-if not hooks:
-    tmpl.pop("hooks", None)
-json.dump(tmpl, open(sys.argv[2], "w"), indent=2, ensure_ascii=False)
-print("  settings.json créé (hooks de notification macOS exclus sur cet OS)")
-EOF
+    echo "  settings.json créé depuis settings.template.json"
   else
-    cp "$REPO_DIR/settings.template.json" "$DEST/settings.json"
-    echo "  ATTENTION: python3 absent — settings.json copié tel quel ; supprime"
-    echo "  manuellement les hooks Notification/Stop (osascript/afplay, macOS uniquement)."
+    echo "  ATTENTION: python3 absent — settings.json non créé/fusionné ;"
+    echo "  reporte manuellement settings.template.json dans $DEST/settings.json."
   fi
 else
-  if [ -n "$PYBIN" ]; then
-    "$PYBIN" - "$DEST/settings.json" "$REPO_DIR/settings.template.json" <<'EOF'
-import json, sys
-dest_path, tmpl_path = sys.argv[1], sys.argv[2]
-dest = json.load(open(dest_path))
+  # Fusion additive et idempotente : rien n'est jamais retiré des settings
+  # existants. Hors macOS, les hooks osascript/afplay sont ignorés.
+  "$PYBIN" - "$DEST/settings.json" "$REPO_DIR/settings.template.json" "$(uname)" <<'EOF'
+import json, os, sys
+dest_path, tmpl_path, system = sys.argv[1:4]
+dest = json.load(open(dest_path)) if os.path.exists(dest_path) else {}
 tmpl = json.load(open(tmpl_path))
-allow = dest.setdefault("permissions", {}).setdefault("allow", [])
-added = [r for r in tmpl["permissions"]["allow"] if r not in allow]
-allow.extend(added)
+
+perms = dest.setdefault("permissions", {})
+added = 0
+for key in ("allow", "ask", "deny"):
+    rules = perms.setdefault(key, [])
+    for rule in tmpl["permissions"].get(key, []):
+        if rule not in rules:
+            rules.append(rule)
+            added += 1
+if "defaultMode" in tmpl["permissions"]:
+    perms.setdefault("defaultMode", tmpl["permissions"]["defaultMode"])
+
+def commands(groups):
+    return {h.get("command") for g in groups for h in g.get("hooks", [])}
+
+hooks_added = 0
+for event, groups in tmpl.get("hooks", {}).items():
+    current = dest.setdefault("hooks", {}).setdefault(event, [])
+    for group in groups:
+        cmds = [h.get("command", "") for h in group.get("hooks", [])]
+        if system != "Darwin" and any("osascript" in c or "afplay" in c for c in cmds):
+            continue
+        if not set(cmds) & commands(current):
+            current.append(group)
+            hooks_added += 1
+    if not current:
+        dest["hooks"].pop(event)
+
 json.dump(dest, open(dest_path, "w"), indent=2, ensure_ascii=False)
-print(f"  permissions fusionnées ({len(added)} règle(s) ajoutée(s))")
-print("  hooks NON modifiés (settings.json existant) — voir settings.template.json")
+print(f"  settings.json : {added} règle(s) de permission et {hooks_added} hook(s) ajoutés")
 EOF
-  else
-    echo "  ATTENTION: python3 absent — fusion des permissions ignorée ;"
-    echo "  ajoute manuellement les règles de settings.template.json à $DEST/settings.json."
-  fi
 fi
 
 echo

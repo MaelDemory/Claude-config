@@ -1,6 +1,6 @@
 ---
 name: simplify-code
-description: Simplify-code, simplify recently modified code, preserve behavior, reduce nesting/duplication, improve naming, or refine React/server code. Use after review and before final verification.
+description: Refines recently modified code for clarity (less nesting and duplication, better naming) while preserving behavior and contracts. Use after review-code on meaningful implementation work, before tests and final verification.
 ---
 # Simplify
 
@@ -40,7 +40,7 @@ Use this as a targeted code clarity pass. It refines recently modified code whil
 - No public contract changes.
 - No feature additions.
 - No large speculative abstractions.
-- React/UI code still follows `frontend-design` and `DESIGN.md` if relevant.
+- React/UI code still follows `DESIGN.md` if relevant.
 
 ## Required output template
 

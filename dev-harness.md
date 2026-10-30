@@ -1,147 +1,88 @@
 # Claude Code Global Dev Harness
 
-Adapted from the OpenCode harness (`AGENTS.md` + `.opencode/`). Global rules should keep agents useful. Project-specific details belong in each repo's `CLAUDE.md`.
+Behavioral guidelines to reduce common LLM coding mistakes and let Claude work on its own once the goal is clear. Project-specific rules live in each repo's `CLAUDE.md` and `lessons.md`.
 
-## How OpenCode primary agents map to Claude Code
+**Tradeoff:** these guidelines bias toward caution before coding and autonomy after. For trivial tasks, use judgment.
 
-Claude Code has no switchable primary agents; their roles are covered natively:
+## 1. Think before coding
 
-- `cto` (orchestrator) → the main session itself, following the routing rules below.
-- `plan` → built-in **Plan Mode** (`shift+tab`) for read-only planning; delegate writable `PLAN-*.md` / `TASK_CONTEXT.md` artifacts to the `planner` subagent.
-- `ask` → ask questions in the main session; do not edit files when the user is only asking a question — report findings and stop.
-- `build` → the main session executing the build chain below.
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-## Subagents (`.claude/agents/`)
+- State your assumptions explicitly.
+- If multiple interpretations exist, present them — don't pick silently. If a simpler approach exists, say so; push back when warranted.
+- If something is unclear, stop, name what's confusing and ask — before writing code, one question at a time, with a recommended default.
+- Minor unknowns that a reasonable assumption covers: state the assumption and continue.
 
-- `planner` — writable planning: PLAN files, TASK_CONTEXT handoffs, uses plan-contest.
-- `plan-contest` — neutral challenge of plans before implementation.
-- `architecture` — code architecture, module boundaries, diagrams, and structural docs.
-- `frontend` — UI implementation with `frontend-design`, component reuse, accessibility, contrast, cmux visual checks, and anti-slop review.
-- `backend` — APIs, data flow, persistence, modular services, validation, and production-quality server code.
-- `review` — read-only implementation review against the plan and task.
-- `test` — independent test design/writing from the plan/spec, not the implementation.
-- `cartography` — codebase documentation and map generation.
-- `indexer` — repo/vault index creation from docs and cartography.
-- `kanban` — vault kanban search/create/update using templates.
-- `file-system` — safe file/project/config navigation and search.
-- `github` — commit/PR workflow only when explicitly requested.
-- `vault` — ObsidianMemory search/write/update using `<vault-root>` (see Vault configuration).
+## 2. Simplicity first
 
-`plan-contest`, `review`, and `file-system` are enforced read-only via `tools: Read, Grep, Glob` in their frontmatter — not just by prose instructions.
+**Minimum code that solves the problem. Nothing speculative.**
 
-Skills live in `.claude/skills/` and keep their OpenCode names (`create-plan`, `grill-me`, `wrap-up`, etc.), with two renames to avoid collisions: `simplify-code` (a `simplify` built-in exists in Claude Code) and `cartography-map` (the `cartography` subagent keeps that name).
+- No features beyond what was asked, no abstractions for single-use code, no unrequested flexibility or configurability.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it. Would a senior engineer call it overcomplicated? Then simplify.
 
-## Repo harness files
+## 3. Surgical changes
 
-- Use `write-agents-md` when creating or updating repo `AGENTS.md`/`CLAUDE.md`, `PROGRESS.md`, `DECISIONS.md`, `feature_list.json`, or vault progress mirrors.
-- Treat the repo harness file as a short router, not an encyclopedia; put detailed rules next to the code they constrain.
-- For durable work, prefer repo state files plus ObsidianMemory Dev Vault/PM records over chat history.
-- When a kanban task exists, keep repo `PROGRESS.md`, `feature_list.json`, vault progress, and kanban status aligned.
-- WIP = 1 by default: one active feature/task until verified, blocked, or explicitly reprioritized.
+**Touch only what you must. Clean up only your own mess.**
 
-## Session state discipline
+- Don't "improve" adjacent code, comments or formatting; don't refactor what isn't broken; match existing style.
+- Unrelated dead code: mention it, don't delete it. Remove only the imports/variables/functions that your change made unused.
+- Never revert, overwrite or delete the user's unrelated work.
+- The test: every changed line traces directly to the request.
 
-- Clock in before durable project work: read repo `CLAUDE.md`/`AGENTS.md`, `PROGRESS.md`, `DECISIONS.md`, `feature_list.json`, vault progress, and matching kanban task when present.
-- Clock out after durable project work: record verification evidence, update repo progress/feature state, and mirror vault/kanban status when configured.
-- If repo, vault progress, and kanban disagree, report the mismatch and avoid marking work done until evidence resolves it.
-- Completion is evidence-gated: passing means verified by commands or explicit manual checks, not agent self-assessment.
-- Keep volatile state in `PROGRESS.md`/vault progress, not in global instructions, so the stable harness stays short and cache-friendly.
+## 4. Goal-driven execution
 
-## Default workflows
+**Define success criteria. Loop until verified.**
 
-### New project
-1. Start in the main session (orchestrator role).
-2. `grill-me`
-3. `vault` subagent + `create-project` when a vault project should be created.
-4. `write-agents-md` for the repo harness file and state files when a repo exists.
-5. Plan Mode or `planner` subagent.
-6. `create-plan`
-7. `plan-contest`
-8. Revise plan until build-ready.
+- Turn tasks into verifiable goals: "fix the bug" → "write a test that reproduces it, then make it pass"; "refactor X" → "tests pass before and after".
+- Multi-step tasks: state a brief plan, each step as `step → verify: check`.
+- Once criteria are clear, loop on your own: implement, run checks, fix. After two failed fix attempts, stop and report with evidence.
+- Done means verified by commands or explicit checks, never self-assessment.
 
-### Existing codebase onboarding
-1. `onboard-project`
-2. `cartography` subagent
-3. `write-agents-md` if the repo lacks a short agent guide, state files, or verification commands.
-4. `create-doc`
-5. `indexer` subagent
-6. `create-index`
-7. `vault` subagent + `memory-write` when knowledge should be persisted.
+## lessons.md — project memory
 
-### Existing project task
-1. `start-session`
-2. `vault-search` and/or `kanban-search`
-3. `grill-me` if requirements are vague.
-4. Plan Mode or `planner` subagent, with `create-plan` + `plan-contest`.
-5. Build chain.
+- Each project keeps a `lessons.md` at the repo root: the rules to know about this project. The SessionStart hook injects it into every session; follow it.
+- After any user correction, or a mistake you find yourself, add a rule immediately — without being asked. Create the file if missing.
+- Format: one bullet per rule, imperative, under a short theme heading: `- <rule>. Why: <reason>.`
+- Keep it short: update or merge an existing rule instead of duplicating; delete rules that became wrong. Consolidate past ~150 lines.
+- Only project-specific, durable rules. Cross-project preferences belong to Claude Code's built-in memory; one-off task details belong nowhere.
 
-### Build chain
-For meaningful implementation work, proactively run this chain:
+## Autonomy and safety
 
-1. Delegate to `frontend` and/or `backend` subagents.
-2. Use `architecture` for structural decisions.
-3. For UI work, require `frontend-design`.
-4. Run `implementation-review` with the `review` subagent.
-5. Run `review-code`.
-6. Run `simplify-code` and apply clear simplifications.
-7. Ask the `test` subagent to write/validate tests with `test-code`.
-8. Finish with `wrap-up`.
+- Pick the workflow yourself; never make the user ask for review, tests or wrap-up.
+- Reversible local actions need no confirmation: reading, editing, running tests/builds, creating a work branch.
+- Always confirm first: commits (unless the user asked), `git push`, PR creation/merge, publishing, deleting user data. Never force-push.
 
-The user should not need to manually request review, simplify, test, or wrap-up after every build.
+## Workflow (scaled to the change)
 
-## Coding discipline
+- **Small** (one file, no contract change): implement, run the relevant check.
+- **Medium** (a few files or a behavior change): implement → `review` subagent with `implementation-review` → `test` subagent with `test-code` → `wrap-up`.
+- **Large** (new feature, cross-module, public contract): `planner` (`create-plan` → `plan-contest`) → `architecture` if structural → `frontend`/`backend` → review → `review-code` + `simplify-code` → `test` → `wrap-up`.
+- `ship` runs this chain end to end. Built-in `/code-review`, `/simplify`, `/security-review` are valid substitutes.
+- The `review` agent is read-only (no Bash): pass it the goal, plan path, `git diff` and check output.
+- Delegate to subagents when it keeps the main context small or work can run in parallel; do small lookups yourself.
 
-- Make the smallest correct change that satisfies the plan/request.
-- Avoid unrelated cleanup, broad rewrites, speculative abstractions, and 1000-line files.
-- Ask only blocking questions; otherwise make a reasonable assumption and continue.
-- In large or syntax-dense files, patch one coherent requirement at a time and verify quickly.
-- When a skill defines a required template or nomenclature, follow it exactly; do not freestyle section names.
-- Function/module comments must use exactly these section labels, without colons or renamed variants: `Parameters`, `What it does`, `Output`.
-- Commit/PR work must use the configured `commit` and `create-pr` nomenclature, and only when explicitly requested.
-- UI/frontend work must check root `DESIGN.md`; if missing for meaningful UI work, create or propose it using `frontend-design`.
-- UI/frontend work with a runnable app should use `cmux browser` for visual/runtime verification when available, and report URL, commands, console/errors, and screenshot/snapshot evidence.
-- Simplification must focus on recently modified code, preserve behavior, and avoid broad speculative refactors.
-- Preserve user work. Do not revert, overwrite, delete, or clean up unrelated changes unless explicitly requested.
-- Do not commit, push, or create PRs unless explicitly requested.
+## Conventions
 
-## Vault configuration
+- Work on a branch for multi-file work: `git switch -c <type>/<short-name>`. Commits and PRs use the `commit` / `create-pr` nomenclature.
+- Function/module comments use exactly these section labels, without colons or renamed variants: `Parameters`, `What it does`, `Output`.
+- When a skill defines a template, follow it exactly.
+- UI work goes through the `frontend` agent: root `DESIGN.md` is the source of truth (`create-design-md` if missing), `frontend-design` for visual direction, and the running app is verified in a browser (`webapp-testing`, `cmux browser`, Claude in Chrome or the built-in browser) with URL, console errors and screenshot evidence.
 
-Single source of truth for vault locations — agents and skills reference these placeholders instead of hard-coded paths:
+## Optional skills
 
-- `<vault-root>` = `~/Documents/ObsidianMemory` (edit here only to relocate the vault).
-- `<legacy-vault-root>` = `~/Documents/ObsidianLegacy` (historical notes; optional).
-- On Windows, resolve `~` explicitly to the user profile (`$env:USERPROFILE`); note that `Documents` may be redirected to OneDrive (`C:\Users\<user>\OneDrive - <org>\Documents`) — use the real resolved path.
-- Vault folder names contain spaces (`Dev Vault`, `Content Vault`): always quote vault paths in shell commands.
-- If `<vault-root>` does not exist, vault/kanban/memory skills must report "not configured" and continue; never fail the task over a missing vault.
+Personal skills in the config repo's `optional/skills/` are active only if copied to `~/.claude/skills/`. `asset-research-skill` / `sector-research-skill` need the Notion MCP and must ask before Notion writes. `content-*` skills read their guides from `<vault-root>/Content Vault/guides/`, where `<vault-root>` = `~/Documents/ObsidianMemory`; if the guides are missing, stop and say so.
 
-## Vault rules
-
-- Configured supervault: `<vault-root>` (see Vault configuration above).
-- Code project memory: `<vault-root>/Dev Vault/projects/<project>/`.
-- Cross-project records/tasks: `<vault-root>/PM/Projects/` and `<vault-root>/PM/Tasks/`.
-- Prefer `vault-search` and indexes before broad vault scans.
-- Ask before bulk vault writes, deletes, renames, or cross-vault changes.
-- Use `memory-write` only for durable, reusable knowledge with evidence.
-
-## Optional skills (not installed by default)
-
-Personal content/investment skills live in `optional/skills/` in the starter repo and are only active if manually copied to `~/.claude/skills/`. When installed:
-
-- Use `asset-research-skill` when the user asks to analyze, create, or update an investment asset/company (requires the Notion MCP and a matching Assets database).
-- Use `sector-research-skill` for investment sector/theme analysis, company universes, and multi-asset pages.
-- `content-post` / `content-article` / `content-weekly` require the Content Vault guides under `<vault-root>/Content Vault/guides/`; if the guides are missing, say so and stop instead of improvising the voice rules.
-- Investment research must research first, prefer primary sources, search existing Assets before create/update, and ask confirmation before Notion writes.
-
-## Verification
-
-- Run relevant checks after edits when available.
-- Explain what each verification proves.
-- If checks fail, fix in scope up to two times, then report remaining risk.
-
-## Final response
+## Final response (medium/large tasks)
 
 - Summary
 - Files changed
 - Commands run
 - Failures or remaining risks
 - Confidence
+
+For questions and small changes, answer directly.
+
+---
+
+**These guidelines are working if:** diffs contain fewer unnecessary changes, fewer rewrites come from overcomplication, clarifying questions come before implementation rather than after mistakes, and the same correction never has to be given twice.

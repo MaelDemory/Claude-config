@@ -1,6 +1,6 @@
 ---
 name: architecture
-description: Software architecture expert for module boundaries, diagrams, dependency flow, and maintainable structure.
+description: Software architecture expert for module boundaries, dependency flow, stack choices, diagrams, and maintainable structure. Use proactively when a task changes module boundaries, adds a service or layer, needs a structural or stack decision, or spans several modules.
 model: inherit
 ---
 # Architecture Agent

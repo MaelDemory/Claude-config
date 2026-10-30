@@ -1,3 +1,22 @@
 [submodule ".claude/skills/apple-design"]
-	path = .claude/skills/apple-design
+	path = vendor/apple-design-skill
 	url = https://github.com/dickwu/apple-design-skill.git
+[submodule ".claude/skills/resume-builder"]
+	path = vendor/resume-builder-skill
+	url = https://github.com/dabydat/resume-builder-skill.git
+[submodule "vendor/anthropics-skills"]
+	path = vendor/anthropics-skills
+	url = https://github.com/anthropics/skills.git
+	shallow = true
+[submodule "vendor/emilkowalski-skills"]
+	path = vendor/emilkowalski-skills
+	url = https://github.com/emilkowalski/skills.git
+	shallow = true
+[submodule "vendor/ibelick-ui-skills"]
+	path = vendor/ibelick-ui-skills
+	url = https://github.com/ibelick/ui-skills.git
+	shallow = true
+[submodule "vendor/vercel-agent-skills"]
+	path = vendor/vercel-agent-skills
+	url = https://github.com/vercel-labs/agent-skills.git
+	shallow = true

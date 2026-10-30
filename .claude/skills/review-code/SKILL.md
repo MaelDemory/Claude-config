@@ -1,6 +1,6 @@
 ---
 name: review-code
-description: Review code quality, logic, slop, oversized files, and simplification opportunities. Use after implementation before tests/final response.
+description: Reviews code quality (logic, complexity, duplication, oversized files, wrong abstractions, type/error/security/accessibility risks). Use after any meaningful implementation, before simplify-code, tests, and the final response.
 ---
 # Review Code
 

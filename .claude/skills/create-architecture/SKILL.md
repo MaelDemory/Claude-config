@@ -1,6 +1,6 @@
 ---
 name: create-architecture
-description: Create architecture docs, stack choices, Mermaid diagrams, cost/ops estimates, module maps, or system design files. Use when mapping full architecture or changing structure.
+description: Writes architecture docs from the required template (structure, stack, Mermaid diagrams, cost/ops, migration path). Use when designing a new system, choosing a stack, changing module boundaries, or documenting architecture that spans several modules.
 ---
 # Create Architecture
 
