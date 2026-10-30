@@ -8,7 +8,8 @@
 #   skills (name, description) ; name = nom de fichier/dossier ; chaque entrée
 #   de external-skills.txt pointe vers un SKILL.md dont le name correspond ;
 #   absence de chemins /Users/<user> ou C:\Users\<user> en dur ; JSON valide de
-#   settings.template.json ; syntaxe bash des scripts ; install.sh passe deux
+#   settings.template.json ; syntaxe bash des scripts ; cas du hook
+#   guard-secrets ; install.sh passe deux
 #   fois de suite dans un CLAUDE_CONFIG_DIR temporaire, la 2e sans rien ajouter.
 # Output
 #   Journal sur stdout ; code retour 1 si au moins une vérification échoue.
@@ -88,6 +89,14 @@ for f in install.sh scripts/*.sh .claude/hooks/*.sh; do
 done
 command -v shellcheck >/dev/null && { shellcheck -S warning install.sh scripts/*.sh .claude/hooks/*.sh || fail "shellcheck"; }
 echo "  ok"
+
+echo "== Hook guard-secrets"
+if out=$(bash scripts/test-guard-secrets.sh); then
+  echo "  ok"
+else
+  printf '%s\n' "$out" | grep FAIL
+  fail "guard-secrets.sh ne bloque/autorise pas les cas attendus"
+fi
 
 echo "== install.sh x2 (idempotence)"
 TMP=$(mktemp -d)
