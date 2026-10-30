@@ -2,6 +2,8 @@
 name: test
 description: Independent test writer that derives tests from the plan, spec, and public contracts, not the current implementation. Use proactively after implementing and reviewing a feature or fix, to add or validate tests.
 model: inherit
+skills:
+  - test-code
 ---
 # Test Agent
 

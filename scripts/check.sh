@@ -26,8 +26,8 @@ PYBIN=$(command -v python3 || command -v python) || { echo "python3 requis"; exi
 echo "== Frontmatter agents/skills"
 "$PYBIN" - <<'EOF' || FAIL=1
 import pathlib, sys
-rules = {".claude/agents": {"name", "description", "model", "tools"},
-         ".claude/skills": {"name", "description"},
+rules = {".claude/agents": {"name", "description", "model", "tools", "skills"},
+         ".claude/skills": {"name", "description", "when_to_use"},
          "optional/skills": {"name", "description"}}
 bad = 0
 def frontmatter(path):
@@ -101,7 +101,7 @@ fi
 echo "== install.sh x2 (idempotence)"
 TMP=$(mktemp -d)
 if CLAUDE_CONFIG_DIR="$TMP" ./install.sh >/dev/null && second=$(CLAUDE_CONFIG_DIR="$TMP" ./install.sh); then
-  if grep -q "settings.json : 0 règle(s) de permission et 0 hook(s) ajoutés" <<<"$second"; then
+  if grep -q "settings.json : 0 règle(s) de permission et 0 hook(s) ajoutés, 0 réglage(s) posé(s)" <<<"$second"; then
     echo "  ok"
   else
     fail "la 2e installation a encore modifié settings.json"

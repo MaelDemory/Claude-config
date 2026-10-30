@@ -1,6 +1,7 @@
 ---
 name: simplify-code
 description: Refines recently modified code for clarity (less nesting and duplication, better naming) while preserving behavior and contracts. Use after review-code on meaningful implementation work, before tests and final verification.
+when_to_use: "Exemples : « simplifie », « nettoie ce que tu viens d'écrire », « c'est trop compliqué », « refactor léger »."
 ---
 # Simplify
 

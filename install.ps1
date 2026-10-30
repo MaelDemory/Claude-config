@@ -149,6 +149,24 @@ foreach ($Key in @("allow", "ask", "deny")) {
 if ($Template.permissions.PSObject.Properties["defaultMode"] -and -not $Settings.permissions.PSObject.Properties["defaultMode"]) {
   $Settings.permissions | Add-Member -NotePropertyName defaultMode -NotePropertyValue $Template.permissions.defaultMode
 }
+# Autres cles (budget des skills, skillOverrides...) : posees seulement si
+# absentes ; pour un objet, cle par cle.
+foreach ($Prop in $Template.PSObject.Properties) {
+  if ($Prop.Name -in @("permissions", "hooks")) { continue }
+  if ($Prop.Value -is [System.Management.Automation.PSCustomObject]) {
+    if (-not $Settings.PSObject.Properties[$Prop.Name]) {
+      $Settings | Add-Member -NotePropertyName $Prop.Name -NotePropertyValue ([pscustomobject]@{})
+    }
+    foreach ($Sub in $Prop.Value.PSObject.Properties) {
+      if (-not $Settings.($Prop.Name).PSObject.Properties[$Sub.Name]) {
+        $Settings.($Prop.Name) | Add-Member -NotePropertyName $Sub.Name -NotePropertyValue $Sub.Value
+      }
+    }
+  }
+  elseif (-not $Settings.PSObject.Properties[$Prop.Name]) {
+    $Settings | Add-Member -NotePropertyName $Prop.Name -NotePropertyValue $Prop.Value
+  }
+}
 # UTF-8 sans BOM : Set-Content -Encoding UTF8 ajoute un BOM sous PowerShell 5.1,
 # ce qui peut casser la lecture JSON de settings.json.
 [System.IO.File]::WriteAllText($SettingsPath, ($Settings | ConvertTo-Json -Depth 100), (New-Object System.Text.UTF8Encoding $false))

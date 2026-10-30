@@ -145,6 +145,22 @@ for key in ("allow", "ask", "deny"):
 if "defaultMode" in tmpl["permissions"]:
     perms.setdefault("defaultMode", tmpl["permissions"]["defaultMode"])
 
+# Autres clés (budget des skills, skillOverrides…) : posées seulement si
+# absentes ; pour un objet, clé par clé.
+settings_added = 0
+for key, value in tmpl.items():
+    if key in ("permissions", "hooks"):
+        continue
+    if isinstance(value, dict):
+        current = dest.setdefault(key, {})
+        for sub, sub_value in value.items():
+            if sub not in current:
+                current[sub] = sub_value
+                settings_added += 1
+    elif key not in dest:
+        dest[key] = value
+        settings_added += 1
+
 def commands(groups):
     return {h.get("command") for g in groups for h in g.get("hooks", [])}
 
@@ -162,7 +178,7 @@ for event, groups in tmpl.get("hooks", {}).items():
         dest["hooks"].pop(event)
 
 json.dump(dest, open(dest_path, "w"), indent=2, ensure_ascii=False)
-print(f"  settings.json : {added} règle(s) de permission et {hooks_added} hook(s) ajoutés")
+print(f"  settings.json : {added} règle(s) de permission et {hooks_added} hook(s) ajoutés, {settings_added} réglage(s) posé(s)")
 EOF
 fi
 

@@ -1,6 +1,7 @@
 ---
 name: wrap-up
 description: Produces the final handoff (summary, files changed, commands and evidence, lessons learned, risks). Use at the end of any build, test, and review chain or meaningful task, before the final response.
+when_to_use: "Exemples : « résume ce que tu as fait », « fais le bilan », « wrap up », fin de tâche."
 ---
 # Wrap-up
 

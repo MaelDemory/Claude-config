@@ -1,6 +1,7 @@
 ---
 name: review-code
 description: Reviews code quality (logic, complexity, duplication, oversized files, wrong abstractions, type/error/security/accessibility risks). Use after any meaningful implementation, before simplify-code, tests, and the final response.
+when_to_use: "Exemples : « fais une review », « relis ce code », « code review », « est-ce que c'est propre ? »."
 ---
 # Review Code
 

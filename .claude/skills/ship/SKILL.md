@@ -1,6 +1,7 @@
 ---
 name: ship
 description: Delivers a feature or fix end to end without user hand-holding (clock-in, plan, build, review, test, wrap-up), scaled to the size of the change. Use when the user asks to build, implement, fix or ship something and expects a finished, verified result.
+when_to_use: "Exemples : « livre / implémente / développe cette feature », « corrige ce bug de bout en bout », « build this », « ship it »."
 ---
 # Ship
 

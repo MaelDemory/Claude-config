@@ -1,6 +1,7 @@
 ---
 name: implementation-review
 description: Checks a finished diff against the original goal, plan, and verification output (scope, correctness, contracts, regressions). Use after any meaningful implementation, before tests and wrap-up; used by the review agent.
+when_to_use: "Exemples : « relis mon implémentation », « vérifie que ça correspond au plan », « review the diff »."
 ---
 # Implementation Review
 

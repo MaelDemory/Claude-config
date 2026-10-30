@@ -2,6 +2,8 @@
 name: frontend
 description: Frontend specialist for UI implementation, design quality (DESIGN.md), component reuse, accessibility, and anti-slop review. Use proactively for any UI work such as pages, components, styling, layout, interactions, or visual fixes.
 model: inherit
+skills:
+  - frontend-design
 ---
 # Frontend Agent
 

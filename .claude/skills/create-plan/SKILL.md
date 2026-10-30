@@ -1,6 +1,7 @@
 ---
 name: create-plan
 description: Writes PLAN-*.md from the required template and sends the plan to plan-contest. Use when the planner subagent or main session plans non-trivial implementation work before building.
+when_to_use: "Exemples : « fais un plan », « planifie cette feature », « plan this », avant un changement multi-fichiers."
 ---
 
 # Create Plan

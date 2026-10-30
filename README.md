@@ -35,7 +35,7 @@ Les hooks (scripts bash, notifications macOS) ne sont pas installés sous Window
 | `.claude/skills/*/` | `~/.claude/skills/` | 13 skills maison : `ship` (livraison de bout en bout), `add-skill` (ajouter une skill au repo), `create-plan`, `grill-me`, `implementation-review`, `review-code`, `simplify-code`, `test-code`, `wrap-up`, `commit`, `create-pr`, `comment`, `create-architecture` |
 | `external-skills.txt` → `vendor/` | `~/.claude/skills/` | 10 skills externes (submodules), voir plus bas |
 | `.claude/hooks/*.sh` | `~/.claude/hooks/` | `session-context.sh` (SessionStart : état git, plans ouverts et `lessons.md` injectés à chaque session) ; `guard-secrets.sh` (bloque la lecture de secrets en Bash) ; `rtk-rewrite.sh` (réécrit les commandes via `rtk` pour économiser des tokens, inactif si rtk absent) |
-| `settings.template.json` | `~/.claude/settings.json` | **allow** large (lecture, git local, tests/builds courants, gh en lecture), **ask** pour l'irréversible (push, `reset --hard`, `rm -rf`, PR, publish), **deny** pour les secrets et le force-push, hooks. Fusion additive : rien n'est jamais retiré d'un settings.json existant |
+| `settings.template.json` | `~/.claude/settings.json` | **allow** large (lecture, git local, tests/builds courants, gh en lecture), **ask** pour l'irréversible (push, `reset --hard`, `rm -rf`, PR, publish), **deny** pour les secrets et le force-push, hooks. Réglages de découverte des skills : budget de la liste porté à 2 % du contexte (`skillListingBudgetFraction`), descriptions plafonnées à 500 caractères (`skillListingMaxDescChars`), `commit`/`create-pr` listés par leur seul nom (`skillOverrides`). Fusion additive : rien n'est jamais retiré ni écrasé dans un settings.json existant |
 
 ## Comment ça marche
 
@@ -44,6 +44,7 @@ Les hooks (scripts bash, notifications macOS) ne sont pas installés sous Window
 - **Boucle autonome** : la tâche devient un critère vérifiable (un test, une commande) ; Claude implémente, vérifie, corrige, et s'arrête après deux échecs avec les preuves.
 - **Workflow proportionné** : petit changement = vérification seule ; moyen = review + tests ; gros = plan + `plan-contest` + review + simplify + tests. `ship` déroule tout.
 - **`lessons.md`** : à la racine de chaque projet, les règles à connaître. Injecté à chaque session par le hook ; après chaque correction de ta part, Claude y ajoute la règle (`- <règle>. Why: <raison>.`) pour ne jamais refaire la même erreur.
+- **Skills trouvées au bon moment** : chaque skill maison a des déclencheurs FR/EN (`when_to_use`), et les agents préchargent la skill dont ils suivent le gabarit (`planner` → `create-plan`, `review` → `implementation-review` + `review-code`, `test` → `test-code`, `frontend` → `frontend-design`). `/doctor` estime le coût de la liste des skills, `/context` montre sa taille réelle.
 - **Garde-fous** : commits, push, PR et publication demandent toujours ta confirmation.
 
 ## Dépendances (optionnelles)

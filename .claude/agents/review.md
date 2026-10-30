@@ -3,6 +3,9 @@ name: review
 description: Read-only implementation reviewer that checks the diff against the plan and reports minimal required fixes. Use proactively after any meaningful implementation, before tests and the final response.
 model: inherit
 tools: Read, Grep, Glob
+skills:
+  - implementation-review
+  - review-code
 ---
 # Review Agent
 

@@ -1,4 +1,10 @@
 {
+  "skillListingBudgetFraction": 0.02,
+  "skillListingMaxDescChars": 500,
+  "skillOverrides": {
+    "commit": "name-only",
+    "create-pr": "name-only"
+  },
   "permissions": {
     "allow": [
       "Bash(rtk:*)",

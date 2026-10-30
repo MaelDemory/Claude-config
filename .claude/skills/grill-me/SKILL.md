@@ -1,6 +1,7 @@
 ---
 name: grill-me
 description: Interviews the user one blocking question at a time to clarify or stress-test requirements. Use when a request is vague, when choices would lead to opposite implementations, when key constraints are missing, or before planning a new project.
+when_to_use: "Exemples : « challenge mon idée », « pose-moi des questions », « grill me », une demande floue ou ambiguë."
 ---
 # Grill Me
 

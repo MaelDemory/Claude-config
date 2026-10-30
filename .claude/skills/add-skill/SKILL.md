@@ -1,6 +1,7 @@
 ---
 name: add-skill
 description: Adds a new skill to this Claude Code config repo, either a third-party skill from a GitHub repo (vetted, vendored as a submodule) or a homemade one, then validates and installs it. Use when the user wants to add, install, integrate or evaluate a skill for their config, or shares a skill link.
+when_to_use: "Exemples : « ajoute cette skill », « installe ce skill », « cette skill est-elle utile ? », un lien GitHub vers une skill."
 ---
 # Add Skill
 
