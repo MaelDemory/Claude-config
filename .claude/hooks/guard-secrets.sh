@@ -9,14 +9,16 @@
 #   to a secret: a .env file (except .env.example / .env.sample /
 #   .env.template), a private key (*.pem, id_rsa*, id_ed25519*) or anything
 #   under a secrets/ directory. Words are checked as paths, so text that merely
-#   mentions ".env" (a grep pattern, a PR body) passes. Requires python3;
+#   mentions ".env" (a grep pattern, a PR body) passes. Requires python3 (Windows: the `py` launcher);
 #   without it, the hook does nothing.
 # Output
 #   exit 2 + reason on stderr (shown to Claude) when blocked; exit 0 otherwise.
 
-command -v python3 >/dev/null 2>&1 || exit 0
+# Windows: `python3` is often the Microsoft Store stub, so prefer `py -3`.
+if command -v py >/dev/null 2>&1; then PY=(py -3); else PY=(python3); fi
+command -v "${PY[0]}" >/dev/null 2>&1 || exit 0
 
-python3 -c '
+"${PY[@]}" -c '
 import json, re, shlex, sys
 
 try:

@@ -12,9 +12,10 @@
 
 H="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.claude/hooks/guard-secrets.sh"
 fail=0
+if command -v py >/dev/null 2>&1; then PY=(py -3); else PY=(python3); fi
 t() {
   expected=$1; shift
-  got=$(python3 -c 'import json,sys;print(json.dumps({"tool_input":{"command":sys.argv[1]}}))' "$1" | "$H" 2>/dev/null; echo $?)
+  got=$("${PY[@]}" -c 'import json,sys;print(json.dumps({"tool_input":{"command":sys.argv[1]}}))' "$1" | "$H" 2>/dev/null; echo $?)
   mark=ok; [ "$got" = "$expected" ] || { mark=FAIL; fail=1; }
   printf '  %-4s %s  %s\n' "$mark" "$got" "$(head -1 <<<"$1")"
 }
