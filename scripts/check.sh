@@ -22,10 +22,18 @@ cd "$REPO_DIR" || exit 1
 FAIL=0
 fail() { echo "  ÉCHEC: $*"; FAIL=1; }
 
-PYBIN=$(command -v python3 || command -v python) || { echo "python3 requis"; exit 1; }
+# Windows : `python3`/`python` peuvent être le stub du Microsoft Store (présent
+# dans le PATH mais en échec) ; on valide par un vrai run, puis `py -3`.
+export PYTHONIOENCODING=utf-8
+PY=()
+for cand in python3 python "py -3"; do
+  # shellcheck disable=SC2086  # "py -3" doit être découpé
+  if $cand -c pass >/dev/null 2>&1; then read -ra PY <<<"$cand"; break; fi
+done
+[ ${#PY[@]} -gt 0 ] || { echo "python3 requis"; exit 1; }
 
 echo "== Frontmatter agents/skills"
-"$PYBIN" - <<'EOF' || FAIL=1
+"${PY[@]}" - <<'EOF' || FAIL=1
 import pathlib, sys
 rules = {".claude/agents": {"name", "description", "model", "tools", "skills"},
          ".claude/skills": {"name", "description", "when_to_use"},
@@ -82,7 +90,7 @@ else
 fi
 
 echo "== JSON"
-"$PYBIN" -c 'import json,sys; json.load(open(sys.argv[1]))' settings.template.json && echo "  ok" || fail "settings.template.json invalide"
+"${PY[@]}" -c 'import json,sys; json.load(open(sys.argv[1]))' settings.template.json && echo "  ok" || fail "settings.template.json invalide"
 
 echo "== Syntaxe bash"
 for f in install.sh scripts/*.sh .claude/hooks/*.sh; do
@@ -107,7 +115,7 @@ if CLAUDE_CONFIG_DIR="$TMP" ./install.sh >/dev/null && second=$(CLAUDE_CONFIG_DI
   else
     fail "la 2e installation a encore modifié settings.json"
   fi
-  "$PYBIN" -c 'import json,sys; json.load(open(sys.argv[1]))' "$TMP/settings.json" || fail "settings.json installé invalide"
+  "${PY[@]}" -c 'import json,sys; json.load(open(sys.argv[1]))' "$TMP/settings.json" || fail "settings.json installé invalide"
   # Une copie posée par une installation précédente puis retirée du repo doit disparaître.
   mkdir -p "$TMP/skills/zz-orphan" "$TMP/skills/zz-user-skill" && echo "skills/zz-orphan" >> "$TMP/.claude-starter-manifest"
   CLAUDE_CONFIG_DIR="$TMP" ./install.sh >/dev/null || fail "install.sh a échoué (3e passe)"

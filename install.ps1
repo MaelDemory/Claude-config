@@ -4,14 +4,15 @@
 #   -Mode : "copy" (defaut, recommande sur Windows) ou "link" (symlinks ;
 #           necessite le mode developpeur Windows ou une console administrateur).
 # What it does
-#   Copie/symlinke les agents, skills et dev-harness.md dans la config globale
-#   Claude Code, ajoute l'import @dev-harness.md au CLAUDE.md global, et cree ou
-#   fusionne les permissions de settings.json (regles allow/ask/deny unies,
-#   defaultMode pose s'il est absent). Les hooks du template (rtk, contexte de
-#   session, notifications) ne sont PAS installes : ils reposent sur
-#   bash/osascript ; a la place, deux hooks Windows (son systeme sur
-#   Notification et Stop) sont ajoutes s'ils manquent. Les skills
-#   optionnelles (optional\skills\) ne sont PAS installees. Initialise aussi les submodules (skills externes) si
+#   Copie/symlinke les agents, skills, hooks et dev-harness.md dans la config
+#   globale Claude Code, ajoute l'import @dev-harness.md au CLAUDE.md global, et
+#   cree ou fusionne settings.json (regles allow/ask/deny unies, defaultMode
+#   pose s'il est absent, hooks ajoutes s'ils manquent ; ancienne version
+#   sauvegardee si elle change). Les hooks bash du template tournent sous Git
+#   Bash ; sont exclus ceux de macOS (osascript/afplay, remplaces par un son
+#   systeme Windows sur Notification et Stop) et rtk-rewrite si un hook
+#   `rtk hook` existe deja. Les skills optionnelles (optional\skills\) ne sont
+#   PAS installees. Initialise aussi les submodules (skills externes) si
 #   .gitmodules existe. Les fichiers existants remplaces sont sauvegardes dans
 #   backups\. Les copies orphelines (installees la fois precedente, absentes du
 #   repo, cf. manifeste .claude-starter-manifest) sont sauvegardees puis
@@ -33,6 +34,7 @@ $BackupDir = Join-Path $Dest ("backups\claude-starter-" + (Get-Date -Format "yyy
 
 New-Item -ItemType Directory -Force -Path (Join-Path $Dest "agents") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $Dest "skills") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $Dest "hooks") | Out-Null
 
 # Chemins (relatifs a $Dest) poses par cette installation : compares au
 # manifeste de la precedente pour retirer les copies devenues orphelines.
@@ -105,10 +107,15 @@ Get-Content (Join-Path $RepoDir "external-skills.txt") | ForEach-Object {
   Place $Src (Join-Path $Dest "skills\$Name")
 }
 
+Write-Host "== Hooks -> $(Join-Path $Dest 'hooks')"
+Get-ChildItem (Join-Path $RepoDir ".claude\hooks") -Filter *.sh | ForEach-Object {
+  Place $_.FullName (Join-Path $Dest "hooks\$($_.Name)")
+}
+
 Write-Host "== Nettoyage des liens orphelins"
 # Un agent/skill supprime du repo laisse un symlink casse dans $Dest : on ne
 # retire que les liens qui pointent dans ce repo vers une cible absente.
-foreach ($Sub in @("agents", "skills")) {
+foreach ($Sub in @("agents", "skills", "hooks")) {
   Get-ChildItem (Join-Path $Dest $Sub) -Force | Where-Object { $_.LinkType } | ForEach-Object {
     $Target = @($_.Target)[0]
     if ($Target -and $Target.StartsWith($RepoDir) -and -not (Test-Path $Target)) {
@@ -117,11 +124,10 @@ foreach ($Sub in @("agents", "skills")) {
     }
   }
 }
-# Mode copy : un agent/skill installe la fois precedente mais absent de cette
-# installation est une copie orpheline ; on la sauvegarde puis la retire. Les
-# hooks/ (poses seulement par install.sh) sont ignores.
+# Mode copy : un agent/skill/hook installe la fois precedente mais absent de
+# cette installation est une copie orpheline ; on la sauvegarde puis la retire.
 if (Test-Path $Manifest) {
-  Get-Content $Manifest | Where-Object { $_ -and -not $_.StartsWith("hooks/") -and -not $Installed.Contains($_) } | ForEach-Object {
+  Get-Content $Manifest | Where-Object { $_ -and -not $Installed.Contains($_) } | ForEach-Object {
     $Path = Join-Path $Dest $_
     if ((Test-Path $Path) -and -not (Get-Item $Path -Force).LinkType) {
       New-Item -ItemType Directory -Force -Path $BackupDir | Out-Null
@@ -149,10 +155,11 @@ else {
   Write-Host "  import deja present"
 }
 
-Write-Host "== Settings (permissions + notifications Windows ; hooks bash du template ignores)"
+Write-Host "== Settings"
 $SettingsPath = Join-Path $Dest "settings.json"
 $Template = Get-Content (Join-Path $RepoDir "settings.template.json") -Raw | ConvertFrom-Json
 $Settings = if (Test-Path $SettingsPath) { Get-Content $SettingsPath -Raw | ConvertFrom-Json } else { [pscustomobject]@{} }
+$Before = $Settings | ConvertTo-Json -Depth 100
 if (-not $Settings.PSObject.Properties["permissions"]) {
   $Settings | Add-Member -NotePropertyName permissions -NotePropertyValue ([pscustomobject]@{})
 }
@@ -190,30 +197,52 @@ foreach ($Prop in $Template.PSObject.Properties) {
     $Settings | Add-Member -NotePropertyName $Prop.Name -NotePropertyValue $Prop.Value
   }
 }
-# Notifications Windows (equivalent des hooks osascript/afplay du template) :
-# un son systeme quand Claude attend une reponse ou a termine. Les hooks
-# s'executent sous Git Bash, d'ou la mise en arriere-plan facon bash.
-$WinHooks = [ordered]@{
-  Notification = 'powershell -NoProfile -Command "[System.Media.SystemSounds]::Exclamation.Play(); Start-Sleep -Milliseconds 800" >/dev/null 2>&1 &'
-  Stop         = 'powershell -NoProfile -Command "[System.Media.SystemSounds]::Asterisk.Play(); Start-Sleep -Milliseconds 800" >/dev/null 2>&1 &'
-}
-$HooksAdded = 0
+# Hooks : ceux du template (scripts bash, executes par Claude Code via Git
+# Bash) sauf osascript/afplay (macOS) et rtk-rewrite si `rtk hook` est deja
+# installe ; plus un son systeme Windows sur Notification et Stop (en
+# arriere-plan facon bash). Un groupe n'est ajoute que si aucune de ses
+# commandes n'est deja presente pour cet evenement.
 if (-not $Settings.PSObject.Properties["hooks"]) {
   $Settings | Add-Member -NotePropertyName hooks -NotePropertyValue ([pscustomobject]@{})
 }
-foreach ($Event in $WinHooks.Keys) {
-  $Groups = if ($Settings.hooks.PSObject.Properties[$Event]) { @($Settings.hooks.$Event) } else { @() }
-  if (@($Groups | ForEach-Object { $_.hooks } | Where-Object { $_.command -eq $WinHooks[$Event] }).Count -eq 0) {
-    $Group = [pscustomobject]@{ hooks = @([pscustomobject]@{ type = "command"; command = $WinHooks[$Event] }) }
-    if ($Settings.hooks.PSObject.Properties[$Event]) { $Settings.hooks.$Event = @($Groups + $Group) }
-    else { $Settings.hooks | Add-Member -NotePropertyName $Event -NotePropertyValue @($Group) }
-    $HooksAdded++
+$HasRtkHook = @($Settings.hooks.PSObject.Properties | ForEach-Object { @($_.Value) } | ForEach-Object { @($_.hooks) } |
+  Where-Object { $_.command -match '\brtk hook\b' }).Count -gt 0
+$NewHooks = New-Object System.Collections.Generic.List[object]
+foreach ($TplEvent in $Template.hooks.PSObject.Properties) {
+  foreach ($Group in @($TplEvent.Value)) {
+    $Cmds = @($Group.hooks | ForEach-Object { $_.command })
+    if (@($Cmds | Where-Object { $_ -match 'osascript|afplay' -or ($HasRtkHook -and $_ -match 'rtk-rewrite') }).Count) { continue }
+    $NewHooks.Add(@($TplEvent.Name, $Group))
   }
 }
-# UTF-8 sans BOM : Set-Content -Encoding UTF8 ajoute un BOM sous PowerShell 5.1,
-# ce qui peut casser la lecture JSON de settings.json.
-[System.IO.File]::WriteAllText($SettingsPath, ($Settings | ConvertTo-Json -Depth 100), (New-Object System.Text.UTF8Encoding $false))
-Write-Host "  permissions fusionnees ($Added regle(s) ajoutee(s)) ; $HooksAdded hook(s) de notification Windows ajoute(s)"
+foreach ($Pair in @(
+    @("Notification", 'powershell -NoProfile -Command "[System.Media.SystemSounds]::Exclamation.Play(); Start-Sleep -Milliseconds 800" >/dev/null 2>&1 &'),
+    @("Stop", 'powershell -NoProfile -Command "[System.Media.SystemSounds]::Asterisk.Play(); Start-Sleep -Milliseconds 800" >/dev/null 2>&1 &'))) {
+  $NewHooks.Add(@($Pair[0], [pscustomobject]@{ hooks = @([pscustomobject]@{ type = "command"; command = $Pair[1] }) }))
+}
+$HooksAdded = 0
+foreach ($Pair in $NewHooks) {
+  $Evt, $Group = $Pair
+  $Groups = @()
+  if ($Settings.hooks.PSObject.Properties[$Evt]) { $Groups = @($Settings.hooks.$Evt) }
+  $Current = @($Groups | ForEach-Object { @($_.hooks) } | ForEach-Object { $_.command })
+  if (@($Group.hooks | Where-Object { $Current -contains $_.command }).Count) { continue }
+  if ($Settings.hooks.PSObject.Properties[$Evt]) { $Settings.hooks.$Evt = $Groups + @($Group) }
+  else { $Settings.hooks | Add-Member -NotePropertyName $Evt -NotePropertyValue @($Group) }
+  $HooksAdded++
+}
+$After = $Settings | ConvertTo-Json -Depth 100
+if ($After -ne $Before) {
+  if (Test-Path $SettingsPath) {
+    New-Item -ItemType Directory -Force -Path $BackupDir | Out-Null
+    Copy-Item $SettingsPath $BackupDir
+    Write-Host "  sauvegarde: $SettingsPath -> $BackupDir"
+  }
+  # UTF-8 sans BOM : Set-Content -Encoding UTF8 ajoute un BOM sous PowerShell
+  # 5.1, ce qui peut casser la lecture JSON de settings.json.
+  [System.IO.File]::WriteAllText($SettingsPath, $After, (New-Object System.Text.UTF8Encoding $false))
+}
+Write-Host "  settings.json : $Added regle(s) de permission et $HooksAdded hook(s) ajoutes"
 
 Write-Host ""
 Write-Host "Installation terminee ($Mode). Redemarre les sessions Claude Code pour appliquer."

@@ -150,11 +150,14 @@ if [ -z "$PYBIN" ]; then
   fi
 else
   # Fusion additive et idempotente : rien n'est jamais retiré des settings
-  # existants. Hors macOS, les hooks osascript/afplay sont ignorés.
-  "$PYBIN" - "$DEST/settings.json" "$REPO_DIR/settings.template.json" "$(uname)" <<'EOF'
-import json, os, sys
-dest_path, tmpl_path, system = sys.argv[1:4]
+  # existants. Hors macOS, les hooks osascript/afplay sont ignorés ; rtk-rewrite
+  # aussi si `rtk hook` est déjà installé. L'ancien settings.json est
+  # sauvegardé s'il change.
+  "$PYBIN" - "$DEST/settings.json" "$REPO_DIR/settings.template.json" "$(uname)" "$BACKUP_DIR" <<'EOF'
+import json, os, shutil, sys
+dest_path, tmpl_path, system, backup_dir = sys.argv[1:5]
 dest = json.load(open(dest_path)) if os.path.exists(dest_path) else {}
+before = json.dumps(dest, sort_keys=True)
 tmpl = json.load(open(tmpl_path))
 
 perms = dest.setdefault("permissions", {})
@@ -187,6 +190,8 @@ for key, value in tmpl.items():
 def commands(groups):
     return {h.get("command") for g in groups for h in g.get("hooks", [])}
 
+# rtk-rewrite fait doublon avec `rtk hook` (installé par rtk lui-même).
+has_rtk_hook = any("rtk hook" in (c or "") for groups in dest.get("hooks", {}).values() for c in commands(groups))
 hooks_added = 0
 for event, groups in tmpl.get("hooks", {}).items():
     current = dest.setdefault("hooks", {}).setdefault(event, [])
@@ -194,13 +199,20 @@ for event, groups in tmpl.get("hooks", {}).items():
         cmds = [h.get("command", "") for h in group.get("hooks", [])]
         if system != "Darwin" and any("osascript" in c or "afplay" in c for c in cmds):
             continue
+        if has_rtk_hook and any("rtk-rewrite" in c for c in cmds):
+            continue
         if not set(cmds) & commands(current):
             current.append(group)
             hooks_added += 1
     if not current:
         dest["hooks"].pop(event)
 
-json.dump(dest, open(dest_path, "w"), indent=2, ensure_ascii=False)
+if json.dumps(dest, sort_keys=True) != before:
+    if os.path.exists(dest_path):
+        os.makedirs(backup_dir, exist_ok=True)
+        shutil.copy2(dest_path, backup_dir)
+        print(f"  sauvegarde: {dest_path} -> {backup_dir}/")
+    json.dump(dest, open(dest_path, "w"), indent=2, ensure_ascii=False)
 print(f"  settings.json : {added} règle(s) de permission et {hooks_added} hook(s) ajoutés, {settings_added} réglage(s) posé(s)")
 EOF
 fi

@@ -24,7 +24,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1          # copie (défaut)
 powershell -ExecutionPolicy Bypass -File install.ps1 -Mode link   # symlinks (mode développeur ou admin)
 ```
 
-Les hooks bash du template (contexte de session, secrets, rtk, notifications macOS) ne sont pas installés sous Windows : `install.ps1` fusionne les permissions dans `settings.json` et ajoute un son système Windows quand Claude attend une réponse (`Notification`) ou a terminé (`Stop`). Sous Git Bash/WSL, `./install.sh copy` fonctionne aussi.
+Claude Code exécute les hooks via Git Bash : `install.ps1` installe donc les hooks bash du template (contexte de session et `lessons.md`, secrets, vérification avant fin de tour, rtk sauf si `rtk hook` est déjà configuré), remplace les notifications macOS par un son système Windows (`Notification`, `Stop`) et sauvegarde `settings.json` dans `backups\` avant de le modifier. Sous Git Bash/WSL, `./install.sh copy` fonctionne aussi.
 
 ## Ce qui est installé
 
@@ -50,7 +50,7 @@ Les hooks bash du template (contexte de session, secrets, rtk, notifications mac
 ## Dépendances (optionnelles)
 
 - `python3` — requis par `install.sh` pour créer/fusionner `settings.json`.
-- `jq` — requis par le hook `rtk-rewrite` ; `python3` — requis par le hook `guard-secrets` (sans eux, ces hooks ne font rien).
+- `jq` — requis par le hook `rtk-rewrite` ; `python3` (sous Windows, le lanceur `py` de python.org) — requis par le hook `guard-secrets` (sans eux, ces hooks ne font rien).
 - `rtk` — réécriture de commandes économe en tokens.
 - `cmux` — vérification visuelle frontend ; à défaut, Claude in Chrome ou le navigateur intégré.
 - Notifications du template : `osascript`/`afplay`, macOS uniquement (exclues ailleurs) ; sous Windows, `install.ps1` pose un équivalent PowerShell (son système).
