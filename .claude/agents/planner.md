@@ -2,6 +2,7 @@
 name: planner
 description: Writable planning subagent that writes PLAN-*.md, runs plan-contest, and produces build-ready specs without coding. Use proactively before non-trivial or multi-file implementation, or when requirements need a durable plan.
 model: inherit
+tools: Read, Grep, Glob, Write, Edit, Skill
 skills:
   - create-plan
 ---
