@@ -86,7 +86,7 @@ echo "== Références skills/agents"
 # Un nom en `kebab-case` cité dans le harnais, un agent ou une skill (ou listé
 # dans le `skills:` d'un agent) doit exister : agent, skill maison, externe ou
 # optionnelle. Évite les renvois morts après une suppression ou un renommage.
-"$PYBIN" - <<'EOF' || FAIL=1
+"${PY[@]}" - <<'EOF' || FAIL=1
 import pathlib, re, sys
 known = {p.stem for p in pathlib.Path(".claude/agents").glob("*.md")}
 for d in (".claude/skills", "optional/skills"):
