@@ -57,7 +57,7 @@ Behavioral guidelines to reduce common LLM coding mistakes and let Claude work o
 
 - **Small** (one file, no contract change): implement, run the relevant check.
 - **Medium** (a few files or a behavior change): implement → `review` subagent with `implementation-review` → `test` subagent with `test-code` → `wrap-up`.
-- **Large** (new feature, cross-module, public contract): `planner` (`create-plan` → `plan-contest`) → `architecture` if structural → `frontend`/`backend` → review → `review-code` + `simplify-code` → `test` → `wrap-up`.
+- **Large** (new feature, cross-module, public contract): `planner` (`create-plan` → `plan-contest`) → `architecture` if structural → `frontend`/`backend` → review → `review-code` + `/simplify` → `test` → `wrap-up`.
 - `ship` runs this chain end to end. Built-in `/code-review`, `/simplify`, `/security-review` are valid substitutes.
 - The `review` agent is read-only (no Bash): pass it the goal, plan path, `git diff` and check output.
 - Delegate to subagents when it keeps the main context small or work can run in parallel; do small lookups yourself.

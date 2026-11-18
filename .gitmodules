@@ -24,3 +24,7 @@
 	path = vendor/cloudflare-security-audit-skill
 	url = https://github.com/cloudflare/security-audit-skill.git
 	shallow = true
+[submodule "vendor/mattpocock-skills"]
+	path = vendor/mattpocock-skills
+	url = https://github.com/mattpocock/skills.git
+	shallow = true

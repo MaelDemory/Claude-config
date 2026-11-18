@@ -24,10 +24,11 @@ Orchestrates the dev harness build chain from one request. The user should not h
    - Delegate to `frontend` / `backend` when it keeps the main context small; use `architecture` for structural decisions.
    - UI work: delegate to `frontend`, which picks the design skills and verifies in a browser (`webapp-testing`).
 6. Verify
+   - Bug fix: use `diagnosing-bugs` to build a command that reproduces the bug before changing code.
    - Run the project's checks (tests, lint, typecheck, build). Fix in scope up to two times.
 7. Review (medium/large)
    - `review` subagent with `implementation-review`; pass it goal, plan path, changed files, `git diff` and check output.
-   - Large: then `review-code` and `simplify-code` (or built-in `/code-review`, `/simplify`). Re-run checks after edits.
+   - Large: then `review-code` and built-in `/simplify` (or `/code-review`). Re-run checks after edits.
 8. Test (medium/large)
    - `test` subagent with `test-code`, derived from the plan/spec. Run the focused test command.
 9. Clock out
