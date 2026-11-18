@@ -17,13 +17,14 @@ TMP=$(mktemp -d)
 command -v cygpath >/dev/null && TMP=$(cygpath -m "$TMP")
 trap 'rm -rf "$TMP"' EXIT
 fail=0
+if command -v py >/dev/null 2>&1; then PY=(py -3); else PY=(python3); fi
 
 # t <attendu: block|pass> <libellé> <stop_hook_active: true|false> <étapes...>
 # Étapes : prompt | edit:<chemin> | bash
 t() {
   expected=$1 label=$2 active=$3; shift 3
   f="$TMP/t.jsonl"
-  python3 - "$f" "$@" <<'PY'
+  "${PY[@]}" - "$f" "$@" <<'PY'
 import json, sys
 out = []
 for step in sys.argv[2:]:

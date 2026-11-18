@@ -9,13 +9,15 @@
 #   file (Edit, Write, MultiEdit, NotebookEdit on anything but .md/.txt/.rst)
 #   and ran no Bash command after its last such edit, blocks the stop once and
 #   asks for the relevant check. Never blocks twice in a row
-#   (stop_hook_active). Requires python3; without it, the hook does nothing.
+#   (stop_hook_active). Requires python3 (Windows: the `py` launcher); without it, the hook does nothing.
 # Output
 #   {"decision":"block","reason":...} on stdout when blocked; always exit 0.
 
-command -v python3 >/dev/null 2>&1 || exit 0
+# Windows: `python3` is often the Microsoft Store stub, so prefer `py -3`.
+if command -v py >/dev/null 2>&1; then PY=(py -3); else PY=(python3); fi
+command -v "${PY[0]}" >/dev/null 2>&1 || exit 0
 
-python3 -c '
+"${PY[@]}" -c '
 import json, sys
 payload = json.load(sys.stdin)
 if payload.get("stop_hook_active"):
