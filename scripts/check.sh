@@ -9,7 +9,7 @@
 #   de external-skills.txt pointe vers un SKILL.md dont le name correspond ;
 #   absence de chemins /Users/<user> ou C:\Users\<user> en dur ; JSON valide de
 #   settings.template.json ; syntaxe bash des scripts ; cas du hook
-#   guard-secrets ; install.sh passe deux
+#   guard-secrets et verify-before-stop ; install.sh passe deux
 #   fois de suite dans un CLAUDE_CONFIG_DIR temporaire, la 2e sans rien ajouter.
 # Output
 #   Journal sur stdout ; code retour 1 si au moins une vérification échoue.
@@ -96,6 +96,14 @@ if out=$(bash scripts/test-guard-secrets.sh); then
 else
   printf '%s\n' "$out" | grep FAIL
   fail "guard-secrets.sh ne bloque/autorise pas les cas attendus"
+fi
+
+echo "== Hook verify-before-stop"
+if out=$(bash scripts/test-verify-before-stop.sh); then
+  echo "  ok"
+else
+  printf '%s\n' "$out" | grep FAIL
+  fail "verify-before-stop.sh ne bloque/autorise pas les cas attendus"
 fi
 
 echo "== install.sh x2 (idempotence)"
