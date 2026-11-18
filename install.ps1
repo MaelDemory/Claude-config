@@ -9,8 +9,9 @@
 #   fusionne les permissions de settings.json (regles allow/ask/deny unies,
 #   defaultMode pose s'il est absent). Les hooks du template (rtk, contexte de
 #   session, notifications) ne sont PAS installes : ils reposent sur
-#   bash/osascript. Les skills optionnelles (optional\skills\) ne sont PAS
-#   installees. Initialise aussi les submodules (skills externes) si
+#   bash/osascript ; a la place, deux hooks Windows (son systeme sur
+#   Notification et Stop) sont ajoutes s'ils manquent. Les skills
+#   optionnelles (optional\skills\) ne sont PAS installees. Initialise aussi les submodules (skills externes) si
 #   .gitmodules existe. Les fichiers existants remplaces sont sauvegardes dans
 #   backups\. Idempotent : relancable sans effet de bord.
 # Output
@@ -126,7 +127,7 @@ else {
   Write-Host "  import deja present"
 }
 
-Write-Host "== Settings (permissions uniquement ; hooks du template = bash/macOS, ignores)"
+Write-Host "== Settings (permissions + notifications Windows ; hooks bash du template ignores)"
 $SettingsPath = Join-Path $Dest "settings.json"
 $Template = Get-Content (Join-Path $RepoDir "settings.template.json") -Raw | ConvertFrom-Json
 $Settings = if (Test-Path $SettingsPath) { Get-Content $SettingsPath -Raw | ConvertFrom-Json } else { [pscustomobject]@{} }
@@ -167,10 +168,31 @@ foreach ($Prop in $Template.PSObject.Properties) {
     $Settings | Add-Member -NotePropertyName $Prop.Name -NotePropertyValue $Prop.Value
   }
 }
+# Notifications Windows (equivalent des hooks osascript/afplay du template) :
+# un son systeme quand Claude attend une reponse ou a termine. Les hooks
+# s'executent sous Git Bash, d'ou la mise en arriere-plan facon bash.
+$WinHooks = [ordered]@{
+  Notification = 'powershell -NoProfile -Command "[System.Media.SystemSounds]::Exclamation.Play(); Start-Sleep -Milliseconds 800" >/dev/null 2>&1 &'
+  Stop         = 'powershell -NoProfile -Command "[System.Media.SystemSounds]::Asterisk.Play(); Start-Sleep -Milliseconds 800" >/dev/null 2>&1 &'
+}
+$HooksAdded = 0
+if (-not $Settings.PSObject.Properties["hooks"]) {
+  $Settings | Add-Member -NotePropertyName hooks -NotePropertyValue ([pscustomobject]@{})
+}
+foreach ($Evt in $WinHooks.Keys) {
+  $Groups = @()
+  if ($Settings.hooks.PSObject.Properties[$Evt]) { $Groups = @($Settings.hooks.$Evt) }
+  if (@($Groups | ForEach-Object { $_.hooks } | Where-Object { $_.command -eq $WinHooks[$Evt] }).Count -eq 0) {
+    $Group = [pscustomobject]@{ hooks = @([pscustomobject]@{ type = "command"; command = $WinHooks[$Evt] }) }
+    if ($Settings.hooks.PSObject.Properties[$Evt]) { $Settings.hooks.$Evt = $Groups + @($Group) }
+    else { $Settings.hooks | Add-Member -NotePropertyName $Evt -NotePropertyValue @($Group) }
+    $HooksAdded++
+  }
+}
 # UTF-8 sans BOM : Set-Content -Encoding UTF8 ajoute un BOM sous PowerShell 5.1,
 # ce qui peut casser la lecture JSON de settings.json.
 [System.IO.File]::WriteAllText($SettingsPath, ($Settings | ConvertTo-Json -Depth 100), (New-Object System.Text.UTF8Encoding $false))
-Write-Host "  permissions fusionnees ($Added regle(s) ajoutee(s)) ; hooks non modifies"
+Write-Host "  permissions fusionnees ($Added regle(s) ajoutee(s)) ; $HooksAdded hook(s) de notification Windows ajoute(s)"
 
 Write-Host ""
 Write-Host "Installation terminee ($Mode). Redemarre les sessions Claude Code pour appliquer."

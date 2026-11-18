@@ -24,7 +24,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1          # copie (défaut)
 powershell -ExecutionPolicy Bypass -File install.ps1 -Mode link   # symlinks (mode développeur ou admin)
 ```
 
-Les hooks (scripts bash, notifications macOS) ne sont pas installés sous Windows : seules les permissions sont fusionnées dans `settings.json`. Sous Git Bash/WSL, `./install.sh copy` fonctionne aussi.
+Les hooks bash du template (contexte de session, secrets, rtk, notifications macOS) ne sont pas installés sous Windows : `install.ps1` fusionne les permissions dans `settings.json` et ajoute un son système Windows quand Claude attend une réponse (`Notification`) ou a terminé (`Stop`). Sous Git Bash/WSL, `./install.sh copy` fonctionne aussi.
 
 ## Ce qui est installé
 
@@ -53,7 +53,7 @@ Les hooks (scripts bash, notifications macOS) ne sont pas installés sous Window
 - `jq` — requis par le hook `rtk-rewrite` ; `python3` — requis par le hook `guard-secrets` (sans eux, ces hooks ne font rien).
 - `rtk` — réécriture de commandes économe en tokens.
 - `cmux` — vérification visuelle frontend ; à défaut, Claude in Chrome ou le navigateur intégré.
-- Notifications du template : `osascript`/`afplay`, macOS uniquement (exclues ailleurs).
+- Notifications du template : `osascript`/`afplay`, macOS uniquement (exclues ailleurs) ; sous Windows, `install.ps1` pose un équivalent PowerShell (son système).
 
 ## Skills externes (submodules)
 
