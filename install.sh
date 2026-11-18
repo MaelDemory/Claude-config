@@ -14,6 +14,9 @@
 #   python3 (ou python) pour créer/fusionner settings.json. Les
 #   fichiers existants non-symlinks sont sauvegardés dans ~/.claude/backups/.
 #   Initialise aussi les submodules (skills externes) si .gitmodules existe.
+#   Retire (après sauvegarde) les copies orphelines : agents/skills/hooks posés
+#   par l'installation précédente (manifeste $DEST/.claude-starter-manifest)
+#   mais absents du repo.
 #   Idempotent : relançable sans effet de bord.
 # Output
 #   Journal des actions sur stdout ; code retour non nul en cas d'échec.
@@ -31,6 +34,11 @@ if [ "$MODE" != "link" ] && [ "$MODE" != "copy" ]; then
 fi
 
 mkdir -p "$DEST/agents" "$DEST/skills" "$DEST/hooks"
+
+# Chemins (relatifs à $DEST) posés par cette installation : comparés au
+# manifeste de la précédente pour retirer les copies devenues orphelines.
+MANIFEST="$DEST/.claude-starter-manifest"
+INSTALLED=()
 
 # Certaines skills sont livrées en submodule (ex. apple-design) : après un clone
 # sans --recurse-submodules leur dossier est vide, ce qui produirait une skill
@@ -54,6 +62,7 @@ place() {
   else
     ln -sfn "$src" "$dst"
   fi
+  INSTALLED+=("${dst#"$DEST"/}")
 }
 
 echo "== Agents -> $DEST/agents/"
@@ -92,6 +101,20 @@ for link in "$DEST/agents/"* "$DEST/skills/"* "$DEST/hooks/"*; do
     "$REPO_DIR"/*) [ -e "$target" ] || { rm "$link"; echo "  retiré: $link"; } ;;
   esac
 done
+# Mode copy : un agent/skill/hook installé la fois précédente mais absent de
+# cette installation est une copie orpheline ; on la sauvegarde puis la retire.
+if [ -f "$MANIFEST" ]; then
+  while read -r rel; do
+    [ -n "$rel" ] || continue
+    case " ${INSTALLED[*]} " in *" $rel "*) continue ;; esac
+    if [ -e "$DEST/$rel" ] && [ ! -L "$DEST/$rel" ]; then
+      mkdir -p "$BACKUP_DIR"
+      mv "$DEST/$rel" "$BACKUP_DIR/"
+      echo "  retiré (copie orpheline): $DEST/$rel -> $BACKUP_DIR/"
+    fi
+  done < "$MANIFEST"
+fi
+printf '%s\n' "${INSTALLED[@]}" > "$MANIFEST"
 
 echo "== Harnais -> $DEST/dev-harness.md"
 place "$REPO_DIR/dev-harness.md" "$DEST/dev-harness.md"

@@ -10,7 +10,8 @@
 #   absence de chemins /Users/<user> ou C:\Users\<user> en dur ; JSON valide de
 #   settings.template.json ; syntaxe bash des scripts ; cas du hook
 #   guard-secrets ; install.sh passe deux
-#   fois de suite dans un CLAUDE_CONFIG_DIR temporaire, la 2e sans rien ajouter.
+#   fois de suite dans un CLAUDE_CONFIG_DIR temporaire, la 2e sans rien ajouter,
+#   puis retire une copie orpheline listée dans le manifeste.
 # Output
 #   Journal sur stdout ; code retour 1 si au moins une vérification échoue.
 
@@ -107,6 +108,11 @@ if CLAUDE_CONFIG_DIR="$TMP" ./install.sh >/dev/null && second=$(CLAUDE_CONFIG_DI
     fail "la 2e installation a encore modifié settings.json"
   fi
   "$PYBIN" -c 'import json,sys; json.load(open(sys.argv[1]))' "$TMP/settings.json" || fail "settings.json installé invalide"
+  # Une copie posée par une installation précédente puis retirée du repo doit disparaître.
+  mkdir -p "$TMP/skills/zz-orphan" "$TMP/skills/zz-user-skill" && echo "skills/zz-orphan" >> "$TMP/.claude-starter-manifest"
+  CLAUDE_CONFIG_DIR="$TMP" ./install.sh >/dev/null || fail "install.sh a échoué (3e passe)"
+  [ ! -e "$TMP/skills/zz-orphan" ] || fail "copie orpheline non retirée"
+  [ -d "$TMP/skills/zz-user-skill" ] || fail "skill hors manifeste supprimée à tort"
 else
   fail "install.sh a échoué"
 fi
