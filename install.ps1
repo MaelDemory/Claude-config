@@ -12,7 +12,9 @@
 #   bash/osascript. Les skills optionnelles (optional\skills\) ne sont PAS
 #   installees. Initialise aussi les submodules (skills externes) si
 #   .gitmodules existe. Les fichiers existants remplaces sont sauvegardes dans
-#   backups\. Idempotent : relancable sans effet de bord.
+#   backups\. Les copies orphelines (installees la fois precedente, absentes du
+#   repo, cf. manifeste .claude-starter-manifest) sont sauvegardees puis
+#   retirees. Idempotent : relancable sans effet de bord.
 # Output
 #   Journal des actions ; s'arrete a la premiere erreur.
 
@@ -30,6 +32,11 @@ $BackupDir = Join-Path $Dest ("backups\claude-starter-" + (Get-Date -Format "yyy
 
 New-Item -ItemType Directory -Force -Path (Join-Path $Dest "agents") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $Dest "skills") | Out-Null
+
+# Chemins (relatifs a $Dest) poses par cette installation : compares au
+# manifeste de la precedente pour retirer les copies devenues orphelines.
+$Manifest = Join-Path $Dest ".claude-starter-manifest"
+$Installed = New-Object System.Collections.Generic.List[string]
 
 # Certaines skills sont livrees en submodule (ex. apple-design) : apres un clone
 # sans --recurse-submodules leur dossier est vide, ce qui produirait une skill
@@ -71,6 +78,7 @@ function Place([string]$Src, [string]$Dst) {
         "lance en administrateur, ou utilise: .\install.ps1 -Mode copy")
     }
   }
+  $script:Installed.Add($Dst.Substring($script:Dest.Length).TrimStart('\', '/').Replace('\', '/'))
 }
 
 Write-Host "== Agents -> $(Join-Path $Dest 'agents')"
@@ -108,6 +116,20 @@ foreach ($Sub in @("agents", "skills")) {
     }
   }
 }
+# Mode copy : un agent/skill installe la fois precedente mais absent de cette
+# installation est une copie orpheline ; on la sauvegarde puis la retire. Les
+# hooks/ (poses seulement par install.sh) sont ignores.
+if (Test-Path $Manifest) {
+  Get-Content $Manifest | Where-Object { $_ -and -not $_.StartsWith("hooks/") -and -not $Installed.Contains($_) } | ForEach-Object {
+    $Path = Join-Path $Dest $_
+    if ((Test-Path $Path) -and -not (Get-Item $Path -Force).LinkType) {
+      New-Item -ItemType Directory -Force -Path $BackupDir | Out-Null
+      Move-Item $Path $BackupDir
+      Write-Host "  retire (copie orpheline): $Path -> $BackupDir"
+    }
+  }
+}
+[System.IO.File]::WriteAllLines($Manifest, [string[]]$Installed.ToArray())
 
 Write-Host "== Harnais -> $(Join-Path $Dest 'dev-harness.md')"
 Place (Join-Path $RepoDir "dev-harness.md") (Join-Path $Dest "dev-harness.md")
