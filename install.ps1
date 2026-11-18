@@ -179,12 +179,13 @@ $HooksAdded = 0
 if (-not $Settings.PSObject.Properties["hooks"]) {
   $Settings | Add-Member -NotePropertyName hooks -NotePropertyValue ([pscustomobject]@{})
 }
-foreach ($Event in $WinHooks.Keys) {
-  $Groups = if ($Settings.hooks.PSObject.Properties[$Event]) { @($Settings.hooks.$Event) } else { @() }
-  if (@($Groups | ForEach-Object { $_.hooks } | Where-Object { $_.command -eq $WinHooks[$Event] }).Count -eq 0) {
-    $Group = [pscustomobject]@{ hooks = @([pscustomobject]@{ type = "command"; command = $WinHooks[$Event] }) }
-    if ($Settings.hooks.PSObject.Properties[$Event]) { $Settings.hooks.$Event = @($Groups + $Group) }
-    else { $Settings.hooks | Add-Member -NotePropertyName $Event -NotePropertyValue @($Group) }
+foreach ($Evt in $WinHooks.Keys) {
+  $Groups = @()
+  if ($Settings.hooks.PSObject.Properties[$Evt]) { $Groups = @($Settings.hooks.$Evt) }
+  if (@($Groups | ForEach-Object { $_.hooks } | Where-Object { $_.command -eq $WinHooks[$Evt] }).Count -eq 0) {
+    $Group = [pscustomobject]@{ hooks = @([pscustomobject]@{ type = "command"; command = $WinHooks[$Evt] }) }
+    if ($Settings.hooks.PSObject.Properties[$Evt]) { $Settings.hooks.$Evt = $Groups + @($Group) }
+    else { $Settings.hooks | Add-Member -NotePropertyName $Evt -NotePropertyValue @($Group) }
     $HooksAdded++
   }
 }
