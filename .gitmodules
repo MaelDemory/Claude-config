@@ -20,3 +20,7 @@
 	path = vendor/vercel-agent-skills
 	url = https://github.com/vercel-labs/agent-skills.git
 	shallow = true
+[submodule "vendor/cloudflare-security-audit-skill"]
+	path = vendor/cloudflare-security-audit-skill
+	url = https://github.com/cloudflare/security-audit-skill.git
+	shallow = true

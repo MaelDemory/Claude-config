@@ -33,7 +33,7 @@ Les hooks (scripts bash, notifications macOS) ne sont pas installés sous Window
 | `dev-harness.md` | `~/.claude/dev-harness.md` + import dans `~/.claude/CLAUDE.md` | Le harnais : les 4 principes, `lessons.md`, autonomie et garde-fous, workflow proportionné |
 | `.claude/agents/*.md` | `~/.claude/agents/` | 8 subagents : `planner`, `plan-contest`, `architecture`, `frontend`, `backend`, `review`, `test`, `github` |
 | `.claude/skills/*/` | `~/.claude/skills/` | 13 skills maison : `ship` (livraison de bout en bout), `add-skill` (ajouter une skill au repo), `create-plan`, `grill-me`, `implementation-review`, `review-code`, `simplify-code`, `test-code`, `wrap-up`, `commit`, `create-pr`, `comment`, `create-architecture` |
-| `external-skills.txt` → `vendor/` | `~/.claude/skills/` | 10 skills externes (submodules), voir plus bas |
+| `external-skills.txt` → `vendor/` | `~/.claude/skills/` | 11 skills externes (submodules), voir plus bas |
 | `.claude/hooks/*.sh` | `~/.claude/hooks/` | `session-context.sh` (SessionStart : état git, plans ouverts et `lessons.md` injectés à chaque session) ; `guard-secrets.sh` (bloque la lecture de secrets en Bash) ; `rtk-rewrite.sh` (réécrit les commandes via `rtk` pour économiser des tokens, inactif si rtk absent) |
 | `settings.template.json` | `~/.claude/settings.json` | **allow** large (lecture, git local, tests/builds courants, gh en lecture), **ask** pour l'irréversible (push, `reset --hard`, `rm -rf`, PR, publish), **deny** pour les secrets et le force-push, hooks. Réglages de découverte des skills : budget de la liste porté à 2 % du contexte (`skillListingBudgetFraction`), descriptions plafonnées à 500 caractères (`skillListingMaxDescChars`), `commit`/`create-pr` listés par leur seul nom (`skillOverrides`). Fusion additive : rien n'est jamais retiré ni écrasé dans un settings.json existant |
 
@@ -71,6 +71,7 @@ Les skills tierces restent chez leurs auteurs : chaque repo est un submodule lé
 | `web-design-guidelines` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | Revue accessibilité, formulaires, focus, états (règles récupérées en ligne à chaque usage) |
 | `apple-design` | [dickwu/apple-design-skill](https://github.com/dickwu/apple-design-skill) | Revue UI/UX selon les Human Interface Guidelines |
 | `resume-builder` | [dabydat/resume-builder-skill](https://github.com/dabydat/resume-builder-skill) | CV et lettres, optimisation ATS |
+| `security-audit` | [cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill) | Audit de sécurité multi-phases (guidance par défaut, audit complet sur demande explicite) ; validateurs de rapport en Node |
 
 Ajouter une skill (externe ou maison) : demande-le simplement à Claude — la skill `add-skill` l'évalue (pertinence, doublons, sécurité, licence), l'ajoute au bon endroit, puis lance `./scripts/check.sh` et `./install.sh`. À la main : `git submodule add --depth 1 <url> vendor/<repo>`, une ligne dans `external-skills.txt`, puis `./install.sh`. Mettre à jour :
 
