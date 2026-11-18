@@ -12,7 +12,7 @@
 #   bash/osascript. Les skills optionnelles (optional\skills\) ne sont PAS
 #   installees. Initialise aussi les submodules (skills externes) si
 #   .gitmodules existe. Les fichiers existants remplaces sont sauvegardes dans
-#   backups. Les copies orphelines (installees la fois precedente, absentes du
+#   backups\. Les copies orphelines (installees la fois precedente, absentes du
 #   repo, cf. manifeste .claude-starter-manifest) sont sauvegardees puis
 #   retirees. Idempotent : relancable sans effet de bord.
 # Output
