@@ -7,6 +7,7 @@
 #   Vérifie : frontmatter des agents (name, description, model, tools) et des
 #   skills (name, description) ; name = nom de fichier/dossier ; chaque entrée
 #   de external-skills.txt pointe vers un SKILL.md dont le name correspond ;
+#   chaque skill/agent cité dans le harnais, les agents et les skills existe ;
 #   absence de chemins /Users/<user> ou C:\Users\<user> en dur ; JSON valide de
 #   settings.template.json ; syntaxe bash des scripts ; cas du hook
 #   guard-secrets ; install.sh passe deux
@@ -69,6 +70,31 @@ for line in pathlib.Path("external-skills.txt").read_text(encoding="utf-8").spli
     if pathlib.Path(".claude/skills", name).exists():
         print(f"  ÉCHEC: external-skills.txt — {name} existe aussi dans .claude/skills"); bad = 1
 print("  ok" if not bad else "  frontmatter invalide")
+sys.exit(bad)
+EOF
+
+echo "== Références skills/agents"
+# Un nom en `kebab-case` cité dans le harnais, un agent ou une skill (ou listé
+# dans le `skills:` d'un agent) doit exister : agent, skill maison, externe ou
+# optionnelle. Évite les renvois morts après une suppression ou un renommage.
+"$PYBIN" - <<'EOF' || FAIL=1
+import pathlib, re, sys
+known = {p.stem for p in pathlib.Path(".claude/agents").glob("*.md")}
+for d in (".claude/skills", "optional/skills"):
+    known |= {p.name for p in pathlib.Path(d).iterdir() if p.is_dir()}
+known |= {l.split()[0] for l in open("external-skills.txt", encoding="utf-8") if l.strip() and not l.startswith("#")}
+known |= {"prefers-reduced-motion"}  # propriété CSS, pas une skill
+files = [pathlib.Path("dev-harness.md"), *pathlib.Path(".claude/agents").glob("*.md"), *pathlib.Path(".claude/skills").glob("*/SKILL.md")]
+bad = 0
+for f in files:
+    text = f.read_text(encoding="utf-8")
+    refs = set(re.findall(r"`([a-z0-9]+(?:-[a-z0-9]+)+)`", text))
+    if text.startswith("---"):
+        refs |= set(re.findall(r"^\s+-\s+([\w-]+)\s*$", text.split("---")[1], re.M))
+    for ref in sorted(refs - known):
+        print(f"  ÉCHEC: {f.as_posix()} cite `{ref}`, introuvable"); bad = 1
+if not bad:
+    print("  ok")
 sys.exit(bad)
 EOF
 
