@@ -14,6 +14,9 @@
 #   python3 (ou python) pour créer/fusionner settings.json. Les
 #   fichiers existants non-symlinks sont sauvegardés dans ~/.claude/backups/.
 #   Initialise aussi les submodules (skills externes) si .gitmodules existe.
+#   Retire (après sauvegarde) les copies orphelines : agents/skills/hooks posés
+#   par l'installation précédente (manifeste $DEST/.claude-starter-manifest)
+#   mais absents du repo.
 #   Idempotent : relançable sans effet de bord.
 # Output
 #   Journal des actions sur stdout ; code retour non nul en cas d'échec.
@@ -31,6 +34,11 @@ if [ "$MODE" != "link" ] && [ "$MODE" != "copy" ]; then
 fi
 
 mkdir -p "$DEST/agents" "$DEST/skills" "$DEST/hooks"
+
+# Chemins (relatifs à $DEST) posés par cette installation : comparés au
+# manifeste de la précédente pour retirer les copies devenues orphelines.
+MANIFEST="$DEST/.claude-starter-manifest"
+INSTALLED=()
 
 # Certaines skills sont livrées en submodule (ex. apple-design) : après un clone
 # sans --recurse-submodules leur dossier est vide, ce qui produirait une skill
@@ -54,6 +62,7 @@ place() {
   else
     ln -sfn "$src" "$dst"
   fi
+  INSTALLED+=("${dst#"$DEST"/}")
 }
 
 echo "== Agents -> $DEST/agents/"
@@ -92,6 +101,20 @@ for link in "$DEST/agents/"* "$DEST/skills/"* "$DEST/hooks/"*; do
     "$REPO_DIR"/*) [ -e "$target" ] || { rm "$link"; echo "  retiré: $link"; } ;;
   esac
 done
+# Mode copy : un agent/skill/hook installé la fois précédente mais absent de
+# cette installation est une copie orpheline ; on la sauvegarde puis la retire.
+if [ -f "$MANIFEST" ]; then
+  while read -r rel; do
+    [ -n "$rel" ] || continue
+    case " ${INSTALLED[*]} " in *" $rel "*) continue ;; esac
+    if [ -e "$DEST/$rel" ] && [ ! -L "$DEST/$rel" ]; then
+      mkdir -p "$BACKUP_DIR"
+      mv "$DEST/$rel" "$BACKUP_DIR/"
+      echo "  retiré (copie orpheline): $DEST/$rel -> $BACKUP_DIR/"
+    fi
+  done < "$MANIFEST"
+fi
+printf '%s\n' "${INSTALLED[@]}" > "$MANIFEST"
 
 echo "== Harnais -> $DEST/dev-harness.md"
 place "$REPO_DIR/dev-harness.md" "$DEST/dev-harness.md"
@@ -127,11 +150,14 @@ if [ -z "$PYBIN" ]; then
   fi
 else
   # Fusion additive et idempotente : rien n'est jamais retiré des settings
-  # existants. Hors macOS, les hooks osascript/afplay sont ignorés.
-  "$PYBIN" - "$DEST/settings.json" "$REPO_DIR/settings.template.json" "$(uname)" <<'EOF'
-import json, os, sys
-dest_path, tmpl_path, system = sys.argv[1:4]
+  # existants. Hors macOS, les hooks osascript/afplay sont ignorés ; rtk-rewrite
+  # aussi si `rtk hook` est déjà installé. L'ancien settings.json est
+  # sauvegardé s'il change.
+  "$PYBIN" - "$DEST/settings.json" "$REPO_DIR/settings.template.json" "$(uname)" "$BACKUP_DIR" <<'EOF'
+import json, os, shutil, sys
+dest_path, tmpl_path, system, backup_dir = sys.argv[1:5]
 dest = json.load(open(dest_path)) if os.path.exists(dest_path) else {}
+before = json.dumps(dest, sort_keys=True)
 tmpl = json.load(open(tmpl_path))
 
 perms = dest.setdefault("permissions", {})
@@ -164,6 +190,8 @@ for key, value in tmpl.items():
 def commands(groups):
     return {h.get("command") for g in groups for h in g.get("hooks", [])}
 
+# rtk-rewrite fait doublon avec `rtk hook` (installé par rtk lui-même).
+has_rtk_hook = any("rtk hook" in (c or "") for groups in dest.get("hooks", {}).values() for c in commands(groups))
 hooks_added = 0
 for event, groups in tmpl.get("hooks", {}).items():
     current = dest.setdefault("hooks", {}).setdefault(event, [])
@@ -171,13 +199,20 @@ for event, groups in tmpl.get("hooks", {}).items():
         cmds = [h.get("command", "") for h in group.get("hooks", [])]
         if system != "Darwin" and any("osascript" in c or "afplay" in c for c in cmds):
             continue
+        if has_rtk_hook and any("rtk-rewrite" in c for c in cmds):
+            continue
         if not set(cmds) & commands(current):
             current.append(group)
             hooks_added += 1
     if not current:
         dest["hooks"].pop(event)
 
-json.dump(dest, open(dest_path, "w"), indent=2, ensure_ascii=False)
+if json.dumps(dest, sort_keys=True) != before:
+    if os.path.exists(dest_path):
+        os.makedirs(backup_dir, exist_ok=True)
+        shutil.copy2(dest_path, backup_dir)
+        print(f"  sauvegarde: {dest_path} -> {backup_dir}/")
+    json.dump(dest, open(dest_path, "w"), indent=2, ensure_ascii=False)
 print(f"  settings.json : {added} règle(s) de permission et {hooks_added} hook(s) ajoutés, {settings_added} réglage(s) posé(s)")
 EOF
 fi
