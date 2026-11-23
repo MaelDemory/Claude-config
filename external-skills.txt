@@ -13,3 +13,5 @@ mobile-native          vendor/emilkowalski-skills/skills/mobile-native
 break-ui               vendor/emilkowalski-skills/skills/break-ui
 create-design-md       vendor/ibelick-ui-skills/skills/create-design-md
 web-design-guidelines  vendor/vercel-agent-skills/skills/web-design-guidelines
+security-audit         vendor/cloudflare-security-audit-skill/skills/security-audit
+diagnosing-bugs        vendor/mattpocock-skills/skills/engineering/diagnosing-bugs
