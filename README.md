@@ -24,7 +24,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1          # copie (défaut)
 powershell -ExecutionPolicy Bypass -File install.ps1 -Mode link   # symlinks (mode développeur ou admin)
 ```
 
-Les hooks (scripts bash, notifications macOS) ne sont pas installés sous Windows : seules les permissions sont fusionnées dans `settings.json`. Sous Git Bash/WSL, `./install.sh copy` fonctionne aussi.
+Claude Code exécute les hooks via Git Bash : `install.ps1` installe donc les hooks bash du template (contexte de session et `lessons.md`, secrets, vérification avant fin de tour, rtk sauf si `rtk hook` est déjà configuré), remplace les notifications macOS par un son système Windows (`Notification`, `Stop`) et sauvegarde `settings.json` dans `backups\` avant de le modifier. Sous Git Bash/WSL, `./install.sh copy` fonctionne aussi.
 
 ## Ce qui est installé
 
@@ -50,10 +50,10 @@ Les hooks (scripts bash, notifications macOS) ne sont pas installés sous Window
 ## Dépendances (optionnelles)
 
 - `python3` — requis par `install.sh` pour créer/fusionner `settings.json`.
-- `jq` — requis par le hook `rtk-rewrite` ; `python3` — requis par le hook `guard-secrets` (sans eux, ces hooks ne font rien).
+- `jq` — requis par le hook `rtk-rewrite` ; `python3` (sous Windows, le lanceur `py` de python.org) — requis par le hook `guard-secrets` (sans eux, ces hooks ne font rien).
 - `rtk` — réécriture de commandes économe en tokens.
 - `cmux` — vérification visuelle frontend ; à défaut, Claude in Chrome ou le navigateur intégré.
-- Notifications du template : `osascript`/`afplay`, macOS uniquement (exclues ailleurs).
+- Notifications du template : `osascript`/`afplay`, macOS uniquement (exclues ailleurs) ; sous Windows, `install.ps1` pose un équivalent PowerShell (son système).
 
 ## Skills externes (submodules)
 
@@ -71,6 +71,8 @@ Les skills tierces restent chez leurs auteurs : chaque repo est un submodule lé
 | `web-design-guidelines` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | Revue accessibilité, formulaires, focus, états (règles récupérées en ligne à chaque usage) |
 | `apple-design` | [dickwu/apple-design-skill](https://github.com/dickwu/apple-design-skill) | Revue UI/UX selon les Human Interface Guidelines |
 | `resume-builder` | [dabydat/resume-builder-skill](https://github.com/dabydat/resume-builder-skill) | CV et lettres, optimisation ATS |
+| `security-audit` | [cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill) | Audit de sécurité multi-phases (guidance par défaut, audit complet sur demande explicite) ; validateurs de rapport en Node |
+| `diagnosing-bugs` | [mattpocock/skills](https://github.com/mattpocock/skills) | Debug discipliné : boucle de reproduction qui échoue sur le bug, hypothèses falsifiables, test de régression, nettoyage |
 
 Ajouter une skill (externe ou maison) : demande-le simplement à Claude — la skill `add-skill` l'évalue (pertinence, doublons, sécurité, licence), l'ajoute au bon endroit, puis lance `./scripts/check.sh` et `./install.sh`. À la main : `git submodule add --depth 1 <url> vendor/<repo>`, une ligne dans `external-skills.txt`, puis `./install.sh`. Mettre à jour :
 
@@ -90,7 +92,6 @@ Installée globalement, elle s'applique déjà à tous tes projets ; il suffit d
 ## Modifier la config
 
 - La source de vérité est ce repo : édite, puis `./scripts/check.sh` (frontmatter, chemins en dur, JSON, syntaxe bash, idempotence d'`install.sh`). La CI GitHub Actions le rejoue et teste `install.ps1` sous Windows.
-- `simplify-code` porte ce nom pour ne pas entrer en collision avec la skill intégrée `simplify`.
 
 ## Désinstallation
 
